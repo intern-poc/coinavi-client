@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { fetchCoins } from './api';
+import { CoinPagination } from './coin-pagination';
 import type { Page } from '@/types/api';
 import type { CoinSummary } from '@/types/coin';
 import { changeColor, formatKrw, formatLargeKrw, formatPercent } from '@/lib/format';
@@ -36,8 +37,12 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
   // 현재 페이지 정보 — effect 재실행 없이 latest 값 추적용.
   const pageInfoRef = useRef({ number: initialPage.number, size: initialPage.size });
 
-  // initialPage 의 가격으로 prevPrices 초기화 (첫 비교 기준).
+  // initialPage 변경 시 (페이지 이동 등) state·ref 동기화.
+  // 다른 페이지의 가격 비교는 의미 없으니 prevPrices clear 후 새로 채움.
   useEffect(() => {
+    pageInfoRef.current = { number: initialPage.number, size: initialPage.size };
+    setPage(initialPage);
+    prevPrices.current.clear();
     initialPage.content.forEach((c) => {
       if (c.currentPrice != null) prevPrices.current.set(c.id, c.currentPrice);
     });
@@ -101,11 +106,10 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">암호화폐 시세</h2>
         <div className="flex items-baseline gap-3 text-sm text-zinc-500">
-          <span>총 {page.totalElements.toLocaleString('ko-KR')}개</span>
           {/* SSR 시점과 CSR 시점 시간이 달라 hydration mismatch 발생 — suppressHydrationWarning 으로 회피.
               CSR 마운트 후엔 매초 갱신되는 시각이라 어차피 server 값과 의미 다름. */}
           <span className="hidden sm:inline" suppressHydrationWarning>
-            · {updatedAt.toLocaleTimeString('ko-KR')} 기준
+            {updatedAt.toLocaleTimeString('ko-KR')} 기준
           </span>
         </div>
       </div>
@@ -182,6 +186,12 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
           </tbody>
         </table>
       </div>
+
+      <CoinPagination
+        totalPages={page.totalPages}
+        currentPage={page.number}
+        totalElements={page.totalElements}
+      />
     </>
   );
 }
