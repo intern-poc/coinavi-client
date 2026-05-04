@@ -56,7 +56,6 @@ export default function LoginPage() {
             useOneTap={false}
             theme="outline"
             size="large"
-            locale="ko"
           />
 
           {busy && <p className="text-sm text-zinc-500">로그인 중...</p>}

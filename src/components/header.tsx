@@ -11,7 +11,7 @@ import { ThemeToggle } from './theme-toggle';
  * 유지 (이 컴포넌트만 client).
  */
 export function Header() {
-  const { status, logout } = useAuth();
+  const { status, user, logout } = useAuth();
 
   return (
     <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
@@ -30,6 +30,11 @@ export function Header() {
 
           {status === 'authenticated' && (
             <>
+              {user && (
+                <span className="px-3 py-2 text-zinc-700 dark:text-zinc-200">
+                  <span className="font-medium">{user.name}</span>님
+                </span>
+              )}
               <span className="px-3 py-2 text-zinc-400 dark:text-zinc-500">대시보드</span>
               <button
                 onClick={logout}

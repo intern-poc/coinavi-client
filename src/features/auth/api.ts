@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import type { UserMe } from '@/types/user';
 
 /** 백엔드 LoginResponse 와 1:1. accessToken 만 노출 (refresh_token 은 cookie 로). */
 export type LoginResponse = {
@@ -18,4 +19,12 @@ export function loginWithGoogle(idToken: string): Promise<LoginResponse> {
  */
 export function logout(): Promise<void> {
   return api.post<void>('/api/v1/auth/logout');
+}
+
+/**
+ * 본인 정보 조회 — 헤더의 "{name}님" 표시 등 식별 정보용.
+ * 백엔드의 access token 검증 통과해야 호출 가능.
+ */
+export function fetchMe(): Promise<UserMe> {
+  return api.get<UserMe>('/api/v1/users/me');
 }
