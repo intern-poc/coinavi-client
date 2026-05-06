@@ -2,22 +2,32 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { CoinPagination } from './coin-pagination';
+import { CurrencyToggle } from '@/components/currency-toggle';
 import type { Page } from '@/types/api';
 import type { CoinSummary } from '@/types/coin';
-import type { UpbitTickerEvent } from '@/types/upbit-ticker';
-import { changeColor, formatKrw, formatLargeKrw, formatPercent } from '@/lib/format';
+import type { LivePriceFrame } from '@/types/live-price-frame';
+import {
+  changeColor,
+  formatLargePrice,
+  formatPercent,
+  formatPrice,
+  type DisplayCurrency,
+} from '@/lib/format';
 
 /**
  * 코인 시세 테이블. 백엔드 SSE stream 으로 frame push 받아 row 단위 patch.
  *
- * <p><b>이전 (polling)</b>: setInterval(1000ms) 로 GET /coins 매초 호출 → 평균 0.5~1초 지연.
- * <b>현재 (SSE)</b>: EventSource 로 long-lived connection 유지 → push 받자마자 갱신 (\\u003c50ms).
+ * <p><b>SSE 환산 (currency 모드별)</b>: 모든 frame 받아서 모드에 맞게 환산해서 적용.
+ * <ul>
+ *   <li>KRW 모드 — Upbit frame 그대로 / Binance frame 은 tradePrice * fxRate 환산</li>
+ *   <li>USD 모드 — Binance frame 그대로 / Upbit frame 은 tradePrice / fxRate 환산</li>
+ * </ul>
  *
- * <p><b>frame 매칭</b>: SSE frame 의 code 는 "KRW-BTC" 형식. page.content 의 coin 은 symbol 기반.
- * code.split('-')[1] 로 symbol 추출 후 매칭. 다른 page 의 코인 frame 은 무시 (현 페이지 X).
+ * <p>이러면 Upbit 매핑 안 된 코인 (페이지 5+ 다수) 도 Binance frame 으로 실시간 갱신.
+ * 같은 코인에 Upbit·Binance 둘 다 frame 들어오면 timestamp 우선 — 마지막 frame 적용.
+ * 김프 차이 (보통 1~5%) 로 살짝 진동 가능, 정밀 우선순위는 9단계 김프 표시 PR 에서.
  *
- * <p><b>EventSource 자동 재연결</b>: 브라우저 기본 동작. 별도 onerror 처리 불필요. 다만
- * 백엔드 일시 장애 시 콘솔 경고만 남김.
+ * <p><b>EventSource 자동 재연결</b>: 브라우저 기본 동작.
  */
 const FLASH_DURATION_MS = 300;
 
@@ -25,15 +35,19 @@ type FlashDirection = 'up' | 'down';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 
-export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
+export function CoinTable({
+  initialPage,
+  currency,
+}: {
+  initialPage: Page<CoinSummary>;
+  currency: DisplayCurrency;
+}) {
   const [page, setPage] = useState(initialPage);
   const [flashes, setFlashes] = useState<Map<number, FlashDirection>>(new Map());
 
-  // 이전 가격 — 변경이 re-render 트리거 안 하게 ref.
   const prevPrices = useRef<Map<number, number>>(new Map());
   const flashTimeoutRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
-  // initialPage 변경 시 (페이지 이동 등) state·ref 동기화.
   useEffect(() => {
     setPage(initialPage);
     prevPrices.current.clear();
@@ -42,67 +56,57 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
     });
   }, [initialPage]);
 
-  // SSE stream 연결 — mount 시 1번. EventSource 가 자동 재연결.
   useEffect(() => {
     const es = new EventSource(`${API_BASE}/api/v1/coins/stream`);
 
     es.addEventListener('ticker', (event) => {
-      const frame: UpbitTickerEvent = JSON.parse((event as MessageEvent).data);
+      const frame: LivePriceFrame = JSON.parse((event as MessageEvent).data);
       applyFrame(frame);
     });
 
     es.onerror = () => {
-      // EventSource 가 자동 재연결 — 콘솔에만 알림. UI 차단 X.
       console.warn('[SSE] connection error — auto reconnecting');
     };
 
     return () => {
       es.close();
-      // flash timeout 정리
       flashTimeoutRef.current.forEach((t) => clearTimeout(t));
       flashTimeoutRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currency]);
 
-  function applyFrame(frame: UpbitTickerEvent) {
-    // "KRW-BTC" → "BTC"
-    const symbol = frame.code.split('-')[1];
-    if (!symbol) return;
+  function applyFrame(frame: LivePriceFrame) {
+    const converted = convertFrame(frame, currency);
+    if (converted == null) return;   // fxRate 누락 등 환산 불가
 
-    const newPrice = frame.trade_price;
-    const newChange24h = frame.signed_change_rate * 100;   // 소수 → %
-    const newVolume = frame.acc_trade_price_24h;
+    const { coinId, price, changeRate, volume } = converted;
 
     setPage((prev) => {
-      const idx = prev.content.findIndex((c) => c.symbol === symbol);
-      if (idx < 0) return prev;   // 다른 페이지의 코인 — 무시
+      const idx = prev.content.findIndex((c) => c.id === coinId);
+      if (idx < 0) return prev;
 
       const old = prev.content[idx];
-      // 가격 동일하면 re-render 회피
-      if (old.currentPrice === newPrice && old.priceChange24h === newChange24h) {
+      if (old.currentPrice === price && old.priceChange24h === changeRate) {
         return prev;
       }
 
       const updated = [...prev.content];
       updated[idx] = {
         ...old,
-        currentPrice: newPrice,
-        priceChange24h: newChange24h,
-        volume24h: newVolume,
+        currentPrice: price,
+        priceChange24h: changeRate,
+        volume24h: volume,
       };
       return { ...prev, content: updated };
     });
 
-    const coinId = coinIdBySymbol(symbol);
-    if (coinId == null) return;   // 다른 페이지 코인 — flash·prev 갱신 모두 skip
+    if (!page.content.some((c) => c.id === coinId)) return;
 
-    // flash 처리 — prev 가격 비교 후 방향 결정.
     const oldPrice = prevPrices.current.get(coinId);
-    if (oldPrice != null && oldPrice !== newPrice) {
-      const direction: FlashDirection = newPrice > oldPrice ? 'up' : 'down';
+    if (oldPrice != null && oldPrice !== price) {
+      const direction: FlashDirection = price > oldPrice ? 'up' : 'down';
       setFlashes((prev) => new Map(prev).set(coinId, direction));
-      // 기존 timeout 있으면 clear 후 새로 set
       const existing = flashTimeoutRef.current.get(coinId);
       if (existing) clearTimeout(existing);
       const t = setTimeout(() => {
@@ -115,23 +119,21 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
       }, FLASH_DURATION_MS);
       flashTimeoutRef.current.set(coinId, t);
     }
-    // prev 갱신
-    prevPrices.current.set(coinId, newPrice);
-  }
-
-  // page.content 안에서 symbol 로 coinId 찾기. ref 가 아니라 state page 사용 — symbol → id 룩업 즉시.
-  function coinIdBySymbol(symbol: string): number | null {
-    const found = page.content.find((c) => c.symbol === symbol);
-    return found?.id ?? null;
+    prevPrices.current.set(coinId, price);
   }
 
   return (
     <>
       <div className="flex items-baseline justify-between mb-4">
-        <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">암호화폐 시세</h2>
-        <span className="text-sm text-zinc-500 hidden sm:inline">
-          실시간 (SSE)
-        </span>
+        <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+          암호화폐 시세
+        </h2>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-zinc-500 hidden sm:inline">
+            실시간 (SSE)
+          </span>
+          <CurrencyToggle />
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
@@ -184,7 +186,7 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
                     </div>
                   </td>
                   <td className={`py-3 px-4 text-right font-mono font-semibold ${priceColor} ${flashClass}`}>
-                    {formatKrw(coin.currentPrice)}
+                    {formatPrice(coin.currentPrice, currency)}
                   </td>
                   <td className={`py-3 px-4 text-right font-mono ${changeColor(coin.priceChange24h)}`}>
                     {formatPercent(coin.priceChange24h)}
@@ -193,10 +195,10 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
                     {formatPercent(coin.priceChange7d)}
                   </td>
                   <td className="py-3 px-4 text-right font-mono text-sm text-zinc-700 dark:text-zinc-300 hidden md:table-cell">
-                    {formatLargeKrw(coin.marketCap)}
+                    {formatLargePrice(coin.marketCap, currency)}
                   </td>
                   <td className="py-3 px-4 text-right font-mono text-sm text-zinc-700 dark:text-zinc-300 hidden lg:table-cell">
-                    {formatLargeKrw(coin.volume24h)}
+                    {formatLargePrice(coin.volume24h, currency)}
                   </td>
                 </tr>
               );
@@ -212,4 +214,49 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
       />
     </>
   );
+}
+
+type ConvertedPrice = {
+  coinId: number;
+  price: number;
+  changeRate: number;
+  volume: number;
+};
+
+/**
+ * frame 의 거래소 원본 통화 → 표시 통화 환산.
+ * 환산 불가능 (fxRate 0 또는 null) 시 null 반환 → applyFrame 이 skip.
+ */
+function convertFrame(frame: LivePriceFrame, target: DisplayCurrency): ConvertedPrice | null {
+  const { coinId, currency, tradePrice, changeRate, volume24h, fxRate } = frame;
+
+  // 같은 통화면 환산 불필요.
+  if (currency === 'KRW' && target === 'KRW') {
+    return { coinId, price: tradePrice, changeRate, volume: volume24h };
+  }
+  if (currency === 'USDT' && target === 'USD') {
+    return { coinId, price: tradePrice, changeRate, volume: volume24h };
+  }
+
+  if (!fxRate || fxRate <= 0) return null;
+
+  // KRW 모드 + Binance frame (USDT) → KRW 환산.
+  if (currency === 'USDT' && target === 'KRW') {
+    return {
+      coinId,
+      price: tradePrice * fxRate,
+      changeRate,
+      volume: volume24h * fxRate,
+    };
+  }
+  // USD 모드 + Upbit frame (KRW) → USD 환산.
+  if (currency === 'KRW' && target === 'USD') {
+    return {
+      coinId,
+      price: tradePrice / fxRate,
+      changeRate,
+      volume: volume24h / fxRate,
+    };
+  }
+  return null;
 }
