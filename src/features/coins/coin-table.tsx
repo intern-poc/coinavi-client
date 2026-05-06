@@ -1,46 +1,40 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { fetchCoins } from './api';
 import { CoinPagination } from './coin-pagination';
 import type { Page } from '@/types/api';
 import type { CoinSummary } from '@/types/coin';
+import type { UpbitTickerEvent } from '@/types/upbit-ticker';
 import { changeColor, formatKrw, formatLargeKrw, formatPercent } from '@/lib/format';
 
 /**
- * 코인 시세 테이블. 1초 polling 으로 실시간 갱신 + 가격 변동 flash.
+ * 코인 시세 테이블. 백엔드 SSE stream 으로 frame push 받아 row 단위 patch.
  *
- * <p><b>Effect 1번만 mount 시 실행 — 핵심 패턴</b>:
- * 매 page 변경마다 useEffect 가 재생성되면 setInterval 이 매번 reset 되어
- * "1초 안에 응답 받으면 → setPage → effect 재생성 → 새 interval 1초 시작"
- * 패턴이 되어 polling 이 사실상 동작 안 한다. deps 빈 배열로 mount 시 1번만
- * 시작하고, 최신 page 정보는 ref 로 추적.
+ * <p><b>이전 (polling)</b>: setInterval(1000ms) 로 GET /coins 매초 호출 → 평균 0.5~1초 지연.
+ * <b>현재 (SSE)</b>: EventSource 로 long-lived connection 유지 → push 받자마자 갱신 (\\u003c50ms).
  *
- * <p><b>3중 캐시 방어</b>: lib/api.ts 에서 cache:'no-store' + Cache-Control 헤더 +
- * URL timestamp 쿼리. 브라우저·Next·프록시 어디든 stale 안 받음.
+ * <p><b>frame 매칭</b>: SSE frame 의 code 는 "KRW-BTC" 형식. page.content 의 coin 은 symbol 기반.
+ * code.split('-')[1] 로 symbol 추출 후 매칭. 다른 page 의 코인 frame 은 무시 (현 페이지 X).
  *
- * <p><b>Flash 효과</b>: 이전 가격(useRef) 과 비교해 상승/하락 감지 → row 에
- * .price-flash-up / down class 부여 → CSS keyframe 800ms 후 자연 소멸.
+ * <p><b>EventSource 자동 재연결</b>: 브라우저 기본 동작. 별도 onerror 처리 불필요. 다만
+ * 백엔드 일시 장애 시 콘솔 경고만 남김.
  */
-const POLL_INTERVAL_MS = 1_000;
-const FLASH_DURATION_MS = 300;   // 거래소 찰나 깜빡 — 짧게.
+const FLASH_DURATION_MS = 300;
 
 type FlashDirection = 'up' | 'down';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+
 export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
   const [page, setPage] = useState(initialPage);
-  const [updatedAt, setUpdatedAt] = useState<Date>(() => new Date());
   const [flashes, setFlashes] = useState<Map<number, FlashDirection>>(new Map());
 
   // 이전 가격 — 변경이 re-render 트리거 안 하게 ref.
   const prevPrices = useRef<Map<number, number>>(new Map());
-  // 현재 페이지 정보 — effect 재실행 없이 latest 값 추적용.
-  const pageInfoRef = useRef({ number: initialPage.number, size: initialPage.size });
+  const flashTimeoutRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   // initialPage 변경 시 (페이지 이동 등) state·ref 동기화.
-  // 다른 페이지의 가격 비교는 의미 없으니 prevPrices clear 후 새로 채움.
   useEffect(() => {
-    pageInfoRef.current = { number: initialPage.number, size: initialPage.size };
     setPage(initialPage);
     prevPrices.current.clear();
     initialPage.content.forEach((c) => {
@@ -48,70 +42,96 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
     });
   }, [initialPage]);
 
+  // SSE stream 연결 — mount 시 1번. EventSource 가 자동 재연결.
   useEffect(() => {
-    let cancelled = false;
-    let flashTimeout: ReturnType<typeof setTimeout> | null = null;
+    const es = new EventSource(`${API_BASE}/api/v1/coins/stream`);
 
-    async function tick() {
-      try {
-        const { number, size } = pageInfoRef.current;
-        const next = await fetchCoins(number, size);
-        if (cancelled) return;
+    es.addEventListener('ticker', (event) => {
+      const frame: UpbitTickerEvent = JSON.parse((event as MessageEvent).data);
+      applyFrame(frame);
+    });
 
-        // 디버그 로그 — Network 탭 + console 에서 1초마다 가격 들어오는지 확인용.
-        // 작동 확인 후 제거해도 됨.
-        const btc = next.content.find((c) => c.symbol === 'BTC');
-        if (btc) {
-          console.log('[poll]', new Date().toLocaleTimeString('ko-KR'), 'BTC:', btc.currentPrice);
-        }
+    es.onerror = () => {
+      // EventSource 가 자동 재연결 — 콘솔에만 알림. UI 차단 X.
+      console.warn('[SSE] connection error — auto reconnecting');
+    };
 
-        // 이전 가격과 비교해 변동 방향 감지.
-        const newFlashes = new Map<number, FlashDirection>();
-        next.content.forEach((coin) => {
-          const prev = prevPrices.current.get(coin.id);
-          if (prev != null && coin.currentPrice != null && coin.currentPrice !== prev) {
-            newFlashes.set(coin.id, coin.currentPrice > prev ? 'up' : 'down');
-          }
-          if (coin.currentPrice != null) {
-            prevPrices.current.set(coin.id, coin.currentPrice);
-          }
-        });
-
-        setPage(next);
-        pageInfoRef.current = { number: next.number, size: next.size };
-        setUpdatedAt(new Date());
-        setFlashes(newFlashes);
-
-        if (flashTimeout) clearTimeout(flashTimeout);
-        flashTimeout = setTimeout(() => {
-          if (!cancelled) setFlashes(new Map());
-        }, FLASH_DURATION_MS);
-      } catch (e) {
-        // polling 실패 silent — 다음 tick 에서 재시도.
-        console.error('[CoinTable] poll failed', e);
-      }
-    }
-
-    const id = setInterval(tick, POLL_INTERVAL_MS);
     return () => {
-      cancelled = true;
-      clearInterval(id);
-      if (flashTimeout) clearTimeout(flashTimeout);
+      es.close();
+      // flash timeout 정리
+      flashTimeoutRef.current.forEach((t) => clearTimeout(t));
+      flashTimeoutRef.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // ← mount 시 1번만. 위 javadoc 참고.
+  }, []);
+
+  function applyFrame(frame: UpbitTickerEvent) {
+    // "KRW-BTC" → "BTC"
+    const symbol = frame.code.split('-')[1];
+    if (!symbol) return;
+
+    const newPrice = frame.trade_price;
+    const newChange24h = frame.signed_change_rate * 100;   // 소수 → %
+    const newVolume = frame.acc_trade_price_24h;
+
+    setPage((prev) => {
+      const idx = prev.content.findIndex((c) => c.symbol === symbol);
+      if (idx < 0) return prev;   // 다른 페이지의 코인 — 무시
+
+      const old = prev.content[idx];
+      // 가격 동일하면 re-render 회피
+      if (old.currentPrice === newPrice && old.priceChange24h === newChange24h) {
+        return prev;
+      }
+
+      const updated = [...prev.content];
+      updated[idx] = {
+        ...old,
+        currentPrice: newPrice,
+        priceChange24h: newChange24h,
+        volume24h: newVolume,
+      };
+      return { ...prev, content: updated };
+    });
+
+    const coinId = coinIdBySymbol(symbol);
+    if (coinId == null) return;   // 다른 페이지 코인 — flash·prev 갱신 모두 skip
+
+    // flash 처리 — prev 가격 비교 후 방향 결정.
+    const oldPrice = prevPrices.current.get(coinId);
+    if (oldPrice != null && oldPrice !== newPrice) {
+      const direction: FlashDirection = newPrice > oldPrice ? 'up' : 'down';
+      setFlashes((prev) => new Map(prev).set(coinId, direction));
+      // 기존 timeout 있으면 clear 후 새로 set
+      const existing = flashTimeoutRef.current.get(coinId);
+      if (existing) clearTimeout(existing);
+      const t = setTimeout(() => {
+        setFlashes((prev) => {
+          const next = new Map(prev);
+          next.delete(coinId);
+          return next;
+        });
+        flashTimeoutRef.current.delete(coinId);
+      }, FLASH_DURATION_MS);
+      flashTimeoutRef.current.set(coinId, t);
+    }
+    // prev 갱신
+    prevPrices.current.set(coinId, newPrice);
+  }
+
+  // page.content 안에서 symbol 로 coinId 찾기. ref 가 아니라 state page 사용 — symbol → id 룩업 즉시.
+  function coinIdBySymbol(symbol: string): number | null {
+    const found = page.content.find((c) => c.symbol === symbol);
+    return found?.id ?? null;
+  }
 
   return (
     <>
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">암호화폐 시세</h2>
-        <div className="flex items-baseline gap-3 text-sm text-zinc-500">
-          {/* SSR 시점과 CSR 시점 시간이 달라 hydration mismatch 발생 — suppressHydrationWarning 으로 회피.
-              CSR 마운트 후엔 매초 갱신되는 시각이라 어차피 server 값과 의미 다름. */}
-          <span className="hidden sm:inline" suppressHydrationWarning>
-            {updatedAt.toLocaleTimeString('ko-KR')} 기준
-          </span>
-        </div>
+        <span className="text-sm text-zinc-500 hidden sm:inline">
+          실시간 (SSE)
+        </span>
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
@@ -132,8 +152,6 @@ export function CoinTable({ initialPage }: { initialPage: Page<CoinSummary> }) {
               const flash = flashes.get(coin.id);
               const flashClass =
                 flash === 'up' ? 'price-flash-up' : flash === 'down' ? 'price-flash-down' : '';
-              // 시세 글자 색은 24h 변동률 부호 기준 (24h percent 색과 일치).
-              // flash background 는 직전 1초 비교 결과 (별개) — 둘이 다를 수 있음.
               const priceColor = changeColor(coin.priceChange24h);
               return (
                 <tr
