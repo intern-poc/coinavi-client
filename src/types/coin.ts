@@ -1,9 +1,14 @@
+import type { DisplayCurrency } from '@/lib/format';
+
 /**
  * 코인 리스트용 요약 정보. 백엔드 CoinSummaryResponse 와 1:1 매칭.
  *
- * 가격·변동률·거래량은 Upbit Redis hit 시 실시간, miss 시 CoinGecko 6h stale.
- * 백엔드 BigDecimal 이 JSON number 로 직렬화 — JS number 정밀도 손실 가능성
- * (큰 시총 등) 있으면 string 으로 전환 필요.
+ * <p>가격·변동률·거래량은 PriceResolver 가 결정 — Upbit hit / Binance×환율 / CoinGecko
+ * fallback 3단 우선순위. {@code currency} 는 응답 단위 (KRW 또는 USD). priceChange %
+ * 는 통화 무관.
+ *
+ * <p>백엔드 BigDecimal 이 JSON number 로 직렬화 — 큰 시총 등 정밀도 손실 가능성
+ * 있으면 string 으로 전환.
  */
 export type CoinSummary = {
   id: number;
@@ -12,6 +17,7 @@ export type CoinSummary = {
   imageUrl: string | null;
   coingeckoId: string | null;
   marketCapRank: number | null;
+  currency: DisplayCurrency;
   currentPrice: number | null;
   marketCap: number | null;
   volume24h: number | null;
