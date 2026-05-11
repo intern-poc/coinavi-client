@@ -203,10 +203,25 @@ export function CoinTable({
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-        <table className="w-full">
+        {/*
+         * table-fixed + colgroup: SSE 로 1초마다 셀 값 길이가 바뀌면 (예: "+0.02%" ↔ "-12.34%")
+         * auto layout 은 매번 컬럼 너비를 재계산해 표 전체가 jitter. 여기서 너비 고정.
+         * 코인 컬럼만 너비 미지정 → 남는 공간 차지.
+         */}
+        <table className="w-full table-fixed">
+          <colgroup>
+            <col className="w-12" />
+            <col />
+            <col className="w-40" />
+            <col className="w-24" />
+            <col className="w-24" />
+            <col className="w-24" />
+            <col className="hidden md:table-column w-32" />
+            <col className="hidden lg:table-column w-36" />
+          </colgroup>
           <thead>
             <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="py-3 px-4 w-12">#</th>
+              <th className="py-3 px-4">#</th>
               <th className="py-3 px-4">코인</th>
               <th className="py-3 px-4 text-right">현재가</th>
               <th className="py-3 px-4 text-right">24h</th>

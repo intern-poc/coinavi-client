@@ -8,12 +8,12 @@ export type DisplayCurrency = 'KRW' | 'USD';
 
 /**
  * 정확한 가격 표시 (코인 가격용).
- * KRW: 113786000 → "113,786,000원"  (1원 단위, 소수점 X — Upbit 도 정수 단위)
- * USD: 68000.50 → "$68,000.50", 0.000123 → "$0.000123"
+ * KRW: 113786000 → "113,786,000원" / 0.0312 → "0.0312원" / 0.00001234 → "0.00001234원"
+ * USD: 68000.50 → "$68,000.50" / 0.000123 → "$0.000123"
  *
- * <p>KRW 가 정수인 이유: Upbit frame 자체가 1원/100원/1000원 단위 정수.
- * Binance USDT × fxRate 환산만 소수점 생기는데, 1초마다 자릿수가 늘어났다 줄었다 해서
- * 칸 폭 진동. 한국 거래소 컨벤션에 맞춰 1원 단위로 끊는 게 자연스러움.
+ * <p>KRW 자릿수 동적 조절: 시바이누·페페 같은 밈코인은 Upbit 에서도 0.0xxx KRW 로 거래되므로
+ * 정수 절삭 시 "0원" 으로 표시되어 정보 손실. 값 크기에 따라 4·8 자리까지 확장.
+ * 자릿수가 변동하므로 호출 측에서 칸 너비를 명시 (table-fixed + colgroup) 해야 jitter 방지.
  */
 export function formatPrice(
   value: number | null | undefined,
@@ -21,11 +21,26 @@ export function formatPrice(
 ): string {
   if (value == null) return '-';
   if (currency === 'KRW') {
-    return `${value.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}원`;
+    return `${value.toLocaleString('ko-KR', { maximumFractionDigits: krwDigits(value) })}원`;
   }
   // USD: 1달러 미만의 알트는 소수점 4~6자리, 그 외엔 2자리.
   const digits = Math.abs(value) < 1 ? 6 : 2;
   return `$${value.toLocaleString('en-US', { maximumFractionDigits: digits })}`;
+}
+
+/**
+ * KRW 표시용 소수점 자릿수. 값 크기에 비례한 유효 정밀도 확보.
+ * - ≥ 100원: 정수 (메이저 코인)
+ * - 1 ≤ x < 100원: 2자리 (도지·BTT 류)
+ * - 0.01 ≤ x < 1원: 4자리 (시바이누 류)
+ * - < 0.01원: 8자리 (페페 류 초저가)
+ */
+function krwDigits(value: number): number {
+  const abs = Math.abs(value);
+  if (abs >= 100) return 0;
+  if (abs >= 1) return 2;
+  if (abs >= 0.01) return 4;
+  return 8;
 }
 
 /**
@@ -42,7 +57,8 @@ export function formatLargePrice(
     if (value >= 1e12) return `${(value / 1e12).toFixed(2)}조원`;
     if (value >= 1e8) return `${(value / 1e8).toFixed(2)}억원`;
     if (value >= 1e4) return `${(value / 1e4).toFixed(2)}만원`;
-    return `${value.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}원`;
+    // 만원 미만 — 시총·거래량에선 거의 안 나오지만 formatPrice 와 일관성 유지
+    return `${value.toLocaleString('ko-KR', { maximumFractionDigits: krwDigits(value) })}원`;
   }
   // USD T/B/M/K — 시총 표기 글로벌 컨벤션
   if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
