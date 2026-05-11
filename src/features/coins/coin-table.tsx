@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { CoinPagination } from "./coin-pagination";
 import { CurrencyToggle } from "@/components/currency-toggle";
@@ -228,6 +229,7 @@ export function CoinTable({
               <th className="py-3 px-4 text-right">
                 <Tooltip
                   placement="bottom"
+                  withIcon
                   content={
                     <>
                       <div className="font-semibold mb-1">김치 프리미엄</div>
@@ -270,7 +272,10 @@ export function CoinTable({
                     {coin.marketCapRank ?? "-"}
                   </td>
                   <td className="py-3 px-4">
-                    <div className="flex items-center gap-3">
+                    <Link
+                      href={detailHref(coin, currency)}
+                      className="flex items-center gap-3 group"
+                    >
                       {coin.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
@@ -284,14 +289,14 @@ export function CoinTable({
                         <div className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700" />
                       )}
                       <div>
-                        <div className="font-medium text-zinc-900 dark:text-zinc-50">
+                        <div className="font-medium text-zinc-900 dark:text-zinc-50 group-hover:underline">
                           {coin.name ?? coin.symbol}
                         </div>
                         <div className="text-xs text-zinc-500">
                           {coin.symbol}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </td>
                   <td
                     className={`py-3 px-4 text-right font-mono font-semibold ${priceColor} ${flashClass}`}
@@ -423,4 +428,16 @@ function kimchiColor(value: number | null): string {
   if (value == null) return "text-zinc-400";
   if (Math.abs(value) < KIMCHI_MIN_DISPLAY) return "text-zinc-500";
   return changeColor(value);
+}
+
+/**
+ * 단건 페이지 href. coingecko_id 있으면 그것 (안정적), 없으면 symbol fallback.
+ * 현재 시세 페이지의 currency 모드를 단건 페이지에도 그대로 전달.
+ */
+function detailHref(
+  coin: CoinSummary,
+  currency: DisplayCurrency,
+): string {
+  const id = coin.coingeckoId ?? coin.symbol;
+  return `/coins/${encodeURIComponent(id)}?currency=${currency}`;
 }
