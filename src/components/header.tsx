@@ -35,7 +35,12 @@ export function Header() {
                   <span className="font-medium">{user.name}</span>님
                 </span>
               )}
-              <span className="px-3 py-2 text-zinc-400 dark:text-zinc-500">대시보드</span>
+              <Link
+                href="/exchange-keys"
+                className="px-3 py-2 text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+              >
+                포트폴리오
+              </Link>
               <button
                 onClick={logout}
                 className="px-3 py-2 text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"

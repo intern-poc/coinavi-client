@@ -52,7 +52,7 @@ export default async function CoinDetailPage({ params, searchParams }: Props) {
         <div className="flex items-center justify-between">
           <Link
             href={currency === "USD" ? "/?currency=USD" : "/"}
-            className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
+            className="inline-flex items-center text-xl font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
           >
             ←
           </Link>
