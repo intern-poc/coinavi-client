@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BackButton } from "@/components/back-button";
 import { CurrencyToggle } from "@/components/currency-toggle";
 import { Header } from "@/components/header";
 import { fetchCoinDetail, fetchCoinChart } from "@/features/coins/api";
@@ -50,12 +50,7 @@ export default async function CoinDetailPage({ params, searchParams }: Props) {
       <Header />
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
         <div className="flex items-center justify-between">
-          <Link
-            href={currency === "USD" ? "/?currency=USD" : "/"}
-            className="inline-flex items-center text-xl font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
-          >
-            ←
-          </Link>
+          <BackButton fallback={currency === "USD" ? "/?currency=USD" : "/"} />
           <CurrencyToggle />
         </div>
         <CoinDetailHeader coin={coin} currency={currency} />
