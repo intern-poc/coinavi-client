@@ -18,6 +18,9 @@ export type PortfolioSummary = {
   totalCoins: number;
   totalExchanges: number;
   totalValuation: number;
+  totalCostBasis: number;
+  totalUnrealizedPnl: number;
+  totalUnrealizedPnlPercent: number | null;   // cost 0 시 null
   currency: DisplayCurrency;
 };
 
@@ -31,6 +34,9 @@ export type PortfolioCoinHolding = {
   currentPrice: number | null;
   valuation: number | null;
   weight: number | null;
+  costBasis: number | null;
+  unrealizedPnl: number | null;
+  unrealizedPnlPercent: number | null;
   byExchange: PortfolioExchangeBreakdown[];
 };
 
