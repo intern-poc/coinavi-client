@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackButton } from "@/components/back-button";
 import { Header } from "@/components/header";
 import { ExchangeKeysClient } from "@/features/exchange-keys/exchange-keys-client";
 
@@ -13,12 +13,7 @@ export default function ExchangeKeysPage() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Header />
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-        <Link
-          href="/"
-          className="inline-flex items-center text-xl font-bold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-50 transition-colors"
-        >
-          ←
-        </Link>
+        <BackButton />
         <ExchangeKeysClient />
       </main>
     </div>

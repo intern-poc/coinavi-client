@@ -36,7 +36,7 @@ export function Header() {
                 </span>
               )}
               <Link
-                href="/exchange-keys"
+                href="/portfolio"
                 className="px-3 py-2 text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
               >
                 포트폴리오
