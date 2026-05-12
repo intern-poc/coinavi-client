@@ -1,6 +1,11 @@
 import Link from 'next/link';
 import { SLICE_COLORS } from './portfolio-pie-chart';
-import { formatPercent, formatPrice, type DisplayCurrency } from '@/lib/format';
+import {
+  changeColor,
+  formatPercent,
+  formatPrice,
+  type DisplayCurrency,
+} from '@/lib/format';
 import type { PortfolioCoinHolding } from '@/types/portfolio';
 
 /**
@@ -47,13 +52,22 @@ export function PortfolioCoinList({
                 {c.symbol}
               </div>
               <div className="text-sm text-zinc-500 font-mono">
-                {c.valuation == null ? '-' : formatPrice(c.valuation, currency)}
+                {c.weight == null ? '-' : formatPercent(c.weight).replace('+', '')}
               </div>
             </div>
             <div className="text-right">
               <div className="font-mono font-semibold text-zinc-900 dark:text-zinc-50">
-                {c.weight == null ? '-' : formatPercent(c.weight).replace('+', '')}
+                {c.valuation == null ? '-' : formatPrice(c.valuation, currency)}
               </div>
+              {c.unrealizedPnl != null && (
+                <div className={`text-xs font-mono mt-0.5 ${changeColor(c.unrealizedPnl)}`}>
+                  {c.unrealizedPnl > 0 ? '+' : ''}
+                  {formatPrice(c.unrealizedPnl, currency)}
+                  {c.unrealizedPnlPercent != null && (
+                    <span className="ml-1">({formatPercent(c.unrealizedPnlPercent)})</span>
+                  )}
+                </div>
+              )}
             </div>
           </Link>
         );

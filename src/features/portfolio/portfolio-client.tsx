@@ -150,6 +150,8 @@ export function PortfolioClient() {
       <div className="flex items-start justify-between gap-3">
         <PortfolioSummary
           totalValuation={portfolio.summary.totalValuation}
+          totalUnrealizedPnl={portfolio.summary.totalUnrealizedPnl}
+          totalUnrealizedPnlPercent={portfolio.summary.totalUnrealizedPnlPercent}
           currency={portfolio.summary.currency}
         />
         <div className="flex items-center gap-2">
@@ -193,7 +195,7 @@ export function PortfolioClient() {
         <PortfolioEmpty />
       ) : (
         <>
-          <PortfolioPieChart coins={sortedCoins} />
+          <PortfolioPieChart coins={sortedCoins} currency={currency} />
           <PortfolioCoinList coins={sortedCoins} currency={currency} />
         </>
       )}
