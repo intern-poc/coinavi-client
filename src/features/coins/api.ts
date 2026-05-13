@@ -1,21 +1,34 @@
 import { apiGet } from '@/lib/api';
 import type { Page } from '@/types/api';
+import type { Category } from '@/types/category';
 import type { CoinSummary, CoinDetail } from '@/types/coin';
 import type { CoinChart, ChartRange } from '@/types/chart';
 import type { DisplayCurrency } from '@/lib/format';
 
 /**
- * 코인 리스트 — 시총 순 페이징 + 통화 토글.
+ * 코인 리스트 — 시총 순 페이징 + 통화 토글 + 카테고리 필터 (선택).
  * page 0-based, size 1~250, currency 기본 KRW.
+ *
+ * <p>categoryId 가 있으면 해당 카테고리에 매핑된 코인만 반환. 매핑은 OnDemand fetch +
+ * 부팅 시 1회 sync 로 채워지므로 일부 코인은 카테고리 결과에서 빠질 수 있음.
  */
 export function fetchCoins(
   page = 0,
   size = 50,
-  currency: DisplayCurrency = 'KRW'
+  currency: DisplayCurrency = 'KRW',
+  categoryId?: string
 ): Promise<Page<CoinSummary>> {
+  const categoryParam = categoryId ? `&categoryId=${encodeURIComponent(categoryId)}` : '';
   return apiGet<Page<CoinSummary>>(
-    `/api/v1/coins?page=${page}&size=${size}&currency=${currency}`
+    `/api/v1/coins?page=${page}&size=${size}&currency=${currency}${categoryParam}`
   );
+}
+
+/**
+ * 카테고리 마스터 리스트 — CoinGecko 슬러그 + 표시명. 인증 불필요.
+ */
+export function fetchCategories(): Promise<Category[]> {
+  return apiGet<Category[]>('/api/v1/categories');
 }
 
 /**
