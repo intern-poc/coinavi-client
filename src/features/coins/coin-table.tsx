@@ -60,9 +60,11 @@ const API_BASE =
 export function CoinTable({
   initialPage,
   currency,
+  categoryName,
 }: {
   initialPage: Page<CoinSummary>;
   currency: DisplayCurrency;
+  categoryName?: string;
 }) {
   const [page, setPage] = useState(initialPage);
   const [flashes, setFlashes] = useState<Map<number, FlashDirection>>(
@@ -193,7 +195,7 @@ export function CoinTable({
     <>
       <div className="flex items-baseline justify-between mb-4">
         <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          암호화폐 시세
+          {categoryName ? `${categoryName} 시세` : "암호화폐 시세"}
         </h2>
         <div className="flex items-center gap-3">
           <span className="text-sm text-zinc-500 hidden sm:inline">

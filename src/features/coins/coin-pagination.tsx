@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 /**
  * 코인 리스트 페이지네이션. URL ?page=N 으로 상태 동기화.
@@ -20,6 +20,7 @@ export function CoinPagination({
   totalElements: number;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const isFirst = currentPage <= 0;
@@ -33,7 +34,7 @@ export function CoinPagination({
       params.delete('page');
     }
     const query = params.toString();
-    router.push(query ? `?${query}` : '/');
+    router.push(query ? `${pathname}?${query}` : pathname);
   }
 
   // 표시할 page 번호 5개 (현재 ±2). 경계 근처 보정.
