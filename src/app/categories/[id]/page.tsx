@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { BackButton } from '@/components/back-button';
 import { CurrencyToggle } from '@/components/currency-toggle';
 import { Header } from '@/components/header';
+import { CategoryDashboard } from '@/features/coins/category-dashboard';
 import { CoinTable } from '@/features/coins/coin-table';
 import { fetchCategories, fetchCoins } from '@/features/coins/api';
 import type { DisplayCurrency } from '@/lib/format';
@@ -59,18 +60,23 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
         </div>
 
         {initialPage.totalElements === 0 ? (
-          <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-10 text-center text-sm text-zinc-500">
-            <p className="mb-2">이 카테고리에 매핑된 코인이 아직 없어요.</p>
-            <p className="text-xs">
-              해당 카테고리 코인의 단건 페이지를 방문하면 자동으로 매핑이 채워집니다.
-            </p>
-          </div>
+          <>
+            <CategoryDashboard categoryId={categoryId} currency={currency} />
+            <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-10 text-center text-sm text-zinc-500">
+              <p className="mb-2">이 카테고리에 매핑된 코인이 아직 없어요.</p>
+              <p className="text-xs">
+                해당 카테고리 코인의 단건 페이지를 방문하면 자동으로 매핑이 채워집니다.
+              </p>
+            </div>
+          </>
         ) : (
           <CoinTable
             initialPage={initialPage}
             currency={currency}
             categoryName={category.name}
-          />
+          >
+            <CategoryDashboard categoryId={categoryId} currency={currency} />
+          </CoinTable>
         )}
       </main>
     </div>
