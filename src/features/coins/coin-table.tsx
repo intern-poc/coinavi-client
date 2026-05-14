@@ -61,10 +61,14 @@ export function CoinTable({
   initialPage,
   currency,
   categoryName,
+  children,
 }: {
   initialPage: Page<CoinSummary>;
   currency: DisplayCurrency;
   categoryName?: string;
+  // 헤딩 ↔ 테이블 사이에 끼울 보조 콘텐츠 (예: 카테고리 대시보드 카드).
+  // Server Component(CategoryDashboard) 를 그대로 children 으로 받아 SSR 결과 삽입.
+  children?: React.ReactNode;
 }) {
   const [page, setPage] = useState(initialPage);
   const [flashes, setFlashes] = useState<Map<number, FlashDirection>>(
@@ -204,6 +208,8 @@ export function CoinTable({
           <CurrencyToggle />
         </div>
       </div>
+
+      {children}
 
       <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
         {/*

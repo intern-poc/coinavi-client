@@ -1,6 +1,7 @@
 import { apiGet } from '@/lib/api';
 import type { Page } from '@/types/api';
 import type { Category } from '@/types/category';
+import type { CategoryStats, TopGainer } from '@/types/category-stats';
 import type { CoinSummary, CoinDetail } from '@/types/coin';
 import type { CoinChart, ChartRange } from '@/types/chart';
 import type { DisplayCurrency } from '@/lib/format';
@@ -29,6 +30,33 @@ export function fetchCoins(
  */
 export function fetchCategories(): Promise<Category[]> {
   return apiGet<Category[]>('/api/v1/categories');
+}
+
+/**
+ * 카테고리 통계 (시총·24h 변동률·24h 거래대금) — 대시보드 카드용.
+ *
+ * <p>백엔드 Redis 캐시 10분 TTL. 카테고리 매칭 실패 시 404 → 호출부 catch.
+ */
+export function fetchCategoryStats(
+  categoryId: string,
+  currency: DisplayCurrency = 'KRW'
+): Promise<CategoryStats> {
+  return apiGet<CategoryStats>(
+    `/api/v1/categories/${encodeURIComponent(categoryId)}/stats?currency=${currency}`
+  );
+}
+
+/**
+ * 카테고리 내 24h 상승률 상위 N — 대시보드 "상위 상승" 카드용.
+ * 매핑된 코인 없거나 priceChange24h 가 모두 NULL 이면 빈 list.
+ */
+export function fetchCategoryTopGainers(
+  categoryId: string,
+  limit = 3
+): Promise<TopGainer[]> {
+  return apiGet<TopGainer[]>(
+    `/api/v1/categories/${encodeURIComponent(categoryId)}/top-gainers?limit=${limit}`
+  );
 }
 
 /**

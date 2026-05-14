@@ -1,5 +1,6 @@
 import { Header } from '@/components/header';
 import { CategoryChips } from '@/features/coins/category-chips';
+import { CategoryDashboard } from '@/features/coins/category-dashboard';
 import { selectChipCategories } from '@/features/coins/category-popular';
 import { CoinTable } from '@/features/coins/coin-table';
 import { fetchCategories, fetchCoins } from '@/features/coins/api';
@@ -45,7 +46,11 @@ export default async function Home({ searchParams }: Props) {
           initialPage={initialPage}
           currency={currency}
           categoryName={selectedCategoryName}
-        />
+        >
+          {categoryId && (
+            <CategoryDashboard categoryId={categoryId} currency={currency} />
+          )}
+        </CoinTable>
       </main>
     </div>
   );
