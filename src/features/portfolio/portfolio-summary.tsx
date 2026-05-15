@@ -12,11 +12,13 @@ import {
  * cost 0 이라 pnlPercent null 일 땐 금액만 표시.
  */
 export function PortfolioSummary({
+  title,
   totalValuation,
   totalUnrealizedPnl,
   totalUnrealizedPnlPercent,
   currency,
 }: {
+  title: string;
   totalValuation: number;
   totalUnrealizedPnl: number;
   totalUnrealizedPnlPercent: number | null;
@@ -25,7 +27,7 @@ export function PortfolioSummary({
   const pnlSign = totalUnrealizedPnl > 0 ? '+' : '';
   return (
     <div>
-      <div className="text-sm text-zinc-500">총 금액</div>
+      <div className="text-sm text-zinc-500">{title}</div>
       <div className="text-3xl sm:text-4xl font-bold font-mono text-zinc-900 dark:text-zinc-50 mt-1">
         {formatPrice(totalValuation, currency)}
       </div>

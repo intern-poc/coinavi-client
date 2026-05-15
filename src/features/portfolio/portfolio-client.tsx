@@ -10,11 +10,14 @@ import {
 } from './api';
 import { PortfolioCoinList } from './portfolio-coin-list';
 import { PortfolioEmpty } from './portfolio-empty';
+import { PortfolioExchangeTabs } from './portfolio-exchange-tabs';
+import { filterPortfolioByExchange, type ExchangeFilter } from './portfolio-filter';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PortfolioSummary } from './portfolio-summary';
 import { useAuth } from '@/features/auth/use-auth';
 import type { DisplayCurrency } from '@/lib/format';
 import type { Portfolio } from '@/types/portfolio';
+import { EXCHANGE_LABELS } from '@/types/exchange-key';
 
 /**
  * 포트폴리오 페이지 client-side 로직.
@@ -37,21 +40,34 @@ export function PortfolioClient() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [exchangeFilter, setExchangeFilter] = useState<ExchangeFilter>('ALL');
 
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollStartRef = useRef<number>(0);
 
-  // 비중 desc 정렬 — 차트·리스트 동일 순서 보장. 시세 누락 (valuation null) 종목은 맨 뒤.
-  // 조기 return 들 위에 호출 — React Hooks 호출 순서 규칙.
+  // 거래소 필터 + 비중 desc 정렬. 조기 return 들 위에 호출 — React Hooks 호출 순서.
+  const filtered = useMemo(() => {
+    if (!portfolio) return null;
+    return filterPortfolioByExchange(portfolio, exchangeFilter);
+  }, [portfolio, exchangeFilter]);
+
   const sortedCoins = useMemo(() => {
-    if (!portfolio) return [];
-    return [...portfolio.coins].sort((a, b) => {
+    if (!filtered) return [];
+    return [...filtered.coins].sort((a, b) => {
       if (a.valuation == null && b.valuation == null) return 0;
       if (a.valuation == null) return 1;
       if (b.valuation == null) return -1;
       return b.valuation - a.valuation;
     });
-  }, [portfolio]);
+  }, [filtered]);
+
+  // 거래소 필터가 *없는* 거래소를 가리키면 (refresh 등으로 사라짐) 자동 ALL 로 복귀
+  useEffect(() => {
+    if (!portfolio || exchangeFilter === 'ALL') return;
+    if (!portfolio.exchanges.some((e) => e.code === exchangeFilter)) {
+      setExchangeFilter('ALL');
+    }
+  }, [portfolio, exchangeFilter]);
 
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -139,20 +155,25 @@ export function PortfolioClient() {
     );
   }
 
-  if (portfolio === null) {
+  if (portfolio === null || filtered === null) {
     return <div className="text-sm text-zinc-500">포트폴리오 불러오는 중...</div>;
   }
 
   const isEmpty = portfolio.summary.totalCoins === 0;
+  const summaryTitle =
+    exchangeFilter === 'ALL'
+      ? '통합 자산'
+      : `${EXCHANGE_LABELS[exchangeFilter]} 보유 현황`;
 
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-3">
         <PortfolioSummary
-          totalValuation={portfolio.summary.totalValuation}
-          totalUnrealizedPnl={portfolio.summary.totalUnrealizedPnl}
-          totalUnrealizedPnlPercent={portfolio.summary.totalUnrealizedPnlPercent}
-          currency={portfolio.summary.currency}
+          title={summaryTitle}
+          totalValuation={filtered.summary.totalValuation}
+          totalUnrealizedPnl={filtered.summary.totalUnrealizedPnl}
+          totalUnrealizedPnlPercent={filtered.summary.totalUnrealizedPnlPercent}
+          currency={filtered.summary.currency}
         />
         <div className="flex items-center gap-2">
           <Link
@@ -195,6 +216,11 @@ export function PortfolioClient() {
         <PortfolioEmpty />
       ) : (
         <>
+          <PortfolioExchangeTabs
+            exchanges={portfolio.exchanges}
+            selected={exchangeFilter}
+            onSelect={setExchangeFilter}
+          />
           <PortfolioPieChart coins={sortedCoins} currency={currency} />
           <PortfolioCoinList coins={sortedCoins} currency={currency} />
         </>
