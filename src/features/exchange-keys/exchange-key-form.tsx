@@ -68,6 +68,7 @@ export function ExchangeKeyForm({
           className="w-full px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 disabled:opacity-50"
         >
           <option value="UPBIT">업비트</option>
+          <option value="BITHUMB">빗썸</option>
           <option value="BINANCE">바이낸스</option>
         </select>
       </div>

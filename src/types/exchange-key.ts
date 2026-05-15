@@ -1,11 +1,12 @@
 /**
  * 거래소 enum. 백엔드 ExchangeCode 와 1:1 매칭.
  */
-export type ExchangeCode = 'UPBIT' | 'BINANCE';
+export type ExchangeCode = 'UPBIT' | 'BINANCE' | 'BITHUMB';
 
 export const EXCHANGE_LABELS: Record<ExchangeCode, string> = {
   UPBIT: '업비트',
   BINANCE: '바이낸스',
+  BITHUMB: '빗썸',
 };
 
 /**

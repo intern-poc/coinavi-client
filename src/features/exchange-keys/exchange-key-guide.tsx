@@ -21,12 +21,17 @@ export function ExchangeKeyGuide() {
         <TabButton active={tab === 'UPBIT'} onClick={() => setTab('UPBIT')}>
           업비트
         </TabButton>
+        <TabButton active={tab === 'BITHUMB'} onClick={() => setTab('BITHUMB')}>
+          빗썸
+        </TabButton>
         <TabButton active={tab === 'BINANCE'} onClick={() => setTab('BINANCE')}>
           바이낸스
         </TabButton>
       </div>
 
-      {tab === 'UPBIT' ? <UpbitGuide /> : <BinanceGuide />}
+      {tab === 'UPBIT' && <UpbitGuide />}
+      {tab === 'BITHUMB' && <BithumbGuide />}
+      {tab === 'BINANCE' && <BinanceGuide />}
     </div>
   );
 }
@@ -74,6 +79,42 @@ function UpbitGuide() {
           className="text-blue-600 dark:text-blue-400 hover:underline"
         >
           docs.upbit.com
+        </a>
+      </li>
+    </ol>
+  );
+}
+
+function BithumbGuide() {
+  return (
+    <ol className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300 list-decimal list-inside">
+      <li>빗썸 웹사이트 로그인 → 우측 상단 프로필 → <b>API 관리</b></li>
+      <li>
+        <b>새 API 발급</b> → 권한은 <b>잔고 조회</b> 만 체크.{' '}
+        <span className="text-red-600 dark:text-red-400 font-medium">
+          거래·출금 권한은 절대 체크하지 마세요.
+        </span>
+      </li>
+      <li>
+        등록 IP 입력 (선택) — 본인 PC IP 또는 서버 IP. 미입력 시 모든 IP 허용 (보안 약함).
+      </li>
+      <li>SMS / OTP 인증 → API Key 와 Secret Key 발급 화면에서 둘 다 복사</li>
+      <li>
+        <span className="text-amber-600 dark:text-amber-400 font-medium">
+          Secret 은 발급 직후 화면에만 표시
+        </span>{' '}
+        — 잃어버리면 재발급. 안전한 곳에 임시 저장 후 등록.
+      </li>
+      <li>위 폼에 붙여넣기 → 등록</li>
+      <li className="pt-1">
+        공식 가이드:{' '}
+        <a
+          href="https://apidocs.bithumb.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          apidocs.bithumb.com
         </a>
       </li>
     </ol>

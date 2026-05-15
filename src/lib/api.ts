@@ -65,7 +65,16 @@ async function request<T>(method: string, path: string, body?: unknown, opts: Re
   }
 
   if (!res.ok) {
-    throw new Error(`API ${path} failed with HTTP ${res.status}`);
+    // 백엔드는 4xx/5xx 에도 CommonResponse { success:false, error:{message} } 형태로 응답.
+    // 사용자 친화 메시지를 드러내기 위해 body 파싱 시도, 실패 시 generic fallback.
+    let message: string | null = null;
+    try {
+      const json: CommonResponse<unknown> = await res.json();
+      message = json.error?.message ?? null;
+    } catch {
+      // body 가 JSON 이 아니거나 비어있음 — fallback 메시지 사용
+    }
+    throw new Error(message ?? `API ${path} failed with HTTP ${res.status}`);
   }
 
   // 204 No Content 등 body 없는 응답 — JSON 파싱 시도 안 함.
