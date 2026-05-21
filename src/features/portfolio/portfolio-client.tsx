@@ -222,9 +222,10 @@ export function PortfolioClient() {
             selected={exchangeFilter}
             onSelect={setExchangeFilter}
           />
-          <PortfolioTrendChart />
           <PortfolioPieChart coins={sortedCoins} currency={currency} />
           <PortfolioCoinList coins={sortedCoins} currency={currency} />
+          {/* 자산 추이는 전체(통합) 기준만 — 거래소 탭 선택 시엔 hide */}
+          {exchangeFilter === 'ALL' && <PortfolioTrendChart />}
         </>
       )}
     </div>
