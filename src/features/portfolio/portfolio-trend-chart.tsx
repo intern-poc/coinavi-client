@@ -25,8 +25,6 @@ import type { PortfolioSnapshot, SnapshotRange } from '@/types/portfolio';
 const RANGES: { code: SnapshotRange; label: string }[] = [
   { code: '1w', label: '1주' },
   { code: '1m', label: '1개월' },
-  { code: '3m', label: '3개월' },
-  { code: '6m', label: '6개월' },
   { code: '1y', label: '1년' },
 ];
 
