@@ -33,8 +33,13 @@ export function ExchangeKeyForm({
   const [secret, setSecret] = useState('');
   const [showSecret, setShowSecret] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // 등록 *직후* 성공 토스트 — 사용자가 "이미 등록됨" 만 보고 실패로 오해하는 걸 방지.
+  // 등록되면 alreadyRegistered 가 즉시 갱신돼 duplicate=true 가 되는데, 그 amber 박스보다
+  // 성공 신호가 먼저 명확히 보여야 함.
+  const [justRegistered, setJustRegistered] = useState<ExchangeCode | null>(null);
 
   const duplicate = alreadyRegistered.has(exchange);
+  const showSuccess = justRegistered === exchange;
   const labels = KEY_FIELD_LABELS[exchange];
 
   async function handleSubmit(e: React.FormEvent) {
@@ -49,6 +54,8 @@ export function ExchangeKeyForm({
       setApiKey('');
       setSecret('');
       setShowSecret(false);
+      setJustRegistered(exchange);
+      window.setTimeout(() => setJustRegistered((cur) => (cur === exchange ? null : cur)), 4000);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '등록 실패');
     }
@@ -67,7 +74,13 @@ export function ExchangeKeyForm({
         </span>
       </div>
 
-      {duplicate && (
+      {showSuccess && (
+        <div className="text-sm text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-2 rounded">
+          ✓ {EXCHANGE_LABELS[exchange]} 키가 등록되었습니다.
+        </div>
+      )}
+
+      {duplicate && !showSuccess && (
         <div className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 rounded">
           이미 {EXCHANGE_LABELS[exchange]} 키가 등록돼 있어요. 다른 거래소를 선택하거나, 위 리스트에서 삭제 후 다시 등록해주세요.
         </div>

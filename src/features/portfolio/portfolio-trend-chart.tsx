@@ -62,16 +62,23 @@ export function PortfolioTrendChart() {
         </div>
       ) : snapshots.length === 0 ? (
         <EmptyState />
-      ) : snapshots.length === 1 ? (
-        <SinglePointHint snapshot={snapshots[0]} />
       ) : (
-        <Chart data={snapshots} />
+        <>
+          <Chart data={snapshots} />
+          {snapshots.length === 1 && (
+            <p className="text-xs text-zinc-500 mt-2 text-center">
+              📍 오늘의 기록 1점. 매일 방문하면 추이 선이 그려집니다.
+            </p>
+          )}
+        </>
       )}
     </div>
   );
 }
 
 function Chart({ data }: { data: PortfolioSnapshot[] }) {
+  // 점 1개일 땐 dot 강조 (line 안 그려지므로) — 사용자가 "차트 안 보임" 느끼지 않게.
+  const showDot = data.length === 1;
   return (
     <div className="h-56">
       <ResponsiveContainer width="100%" height="100%">
@@ -115,6 +122,7 @@ function Chart({ data }: { data: PortfolioSnapshot[] }) {
             stroke="#0ea5e9"
             strokeWidth={2}
             fill="url(#trendGradient)"
+            dot={showDot ? { r: 5, fill: '#0ea5e9' } : false}
           />
         </AreaChart>
       </ResponsiveContainer>
