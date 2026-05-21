@@ -14,6 +14,7 @@ import { PortfolioExchangeTabs } from './portfolio-exchange-tabs';
 import { filterPortfolioByExchange, type ExchangeFilter } from './portfolio-filter';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PortfolioSummary } from './portfolio-summary';
+import { PortfolioTrendChart } from './portfolio-trend-chart';
 import { useAuth } from '@/features/auth/use-auth';
 import type { DisplayCurrency } from '@/lib/format';
 import type { Portfolio } from '@/types/portfolio';
@@ -221,6 +222,7 @@ export function PortfolioClient() {
             selected={exchangeFilter}
             onSelect={setExchangeFilter}
           />
+          <PortfolioTrendChart />
           <PortfolioPieChart coins={sortedCoins} currency={currency} />
           <PortfolioCoinList coins={sortedCoins} currency={currency} />
         </>
