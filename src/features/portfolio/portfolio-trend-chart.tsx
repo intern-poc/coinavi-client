@@ -41,12 +41,9 @@ export function PortfolioTrendChart() {
   }, [range]);
 
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
+    <div>
       <div className="flex items-baseline justify-between mb-3">
-        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
-          자산 추이
-          <span className="ml-2 text-xs font-normal text-zinc-500">(KRW)</span>
-        </h3>
+        <span className="text-xs text-zinc-500">통합 자산 추이 (KRW)</span>
         <RangeTabs selected={range} onSelect={setRange} />
       </div>
 

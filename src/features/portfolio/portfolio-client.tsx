@@ -8,13 +8,13 @@ import {
   fetchPortfolio,
   refreshPortfolio,
 } from './api';
+import { PortfolioChartView } from './portfolio-chart-view';
 import { PortfolioCoinList } from './portfolio-coin-list';
 import { PortfolioEmpty } from './portfolio-empty';
 import { PortfolioExchangeTabs } from './portfolio-exchange-tabs';
 import { filterPortfolioByExchange, type ExchangeFilter } from './portfolio-filter';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PortfolioSummary } from './portfolio-summary';
-import { PortfolioTrendChart } from './portfolio-trend-chart';
 import { useAuth } from '@/features/auth/use-auth';
 import type { DisplayCurrency } from '@/lib/format';
 import type { Portfolio } from '@/types/portfolio';
@@ -222,10 +222,13 @@ export function PortfolioClient() {
             selected={exchangeFilter}
             onSelect={setExchangeFilter}
           />
-          <PortfolioPieChart coins={sortedCoins} currency={currency} />
+          {/* 전체 탭은 도넛↔추이 토글 카드, 거래소 탭은 도넛만 */}
+          {exchangeFilter === 'ALL' ? (
+            <PortfolioChartView coins={sortedCoins} currency={currency} />
+          ) : (
+            <PortfolioPieChart coins={sortedCoins} currency={currency} />
+          )}
           <PortfolioCoinList coins={sortedCoins} currency={currency} />
-          {/* 자산 추이는 전체(통합) 기준만 — 거래소 탭 선택 시엔 hide */}
-          {exchangeFilter === 'ALL' && <PortfolioTrendChart />}
         </>
       )}
     </div>
