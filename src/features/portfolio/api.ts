@@ -3,7 +3,9 @@ import type { DisplayCurrency } from '@/lib/format';
 import type {
   CollectionJob,
   Portfolio,
+  PortfolioSnapshot,
   RefreshJobCreated,
+  SnapshotRange,
 } from '@/types/portfolio';
 
 /**
@@ -26,4 +28,14 @@ export function refreshPortfolio(): Promise<RefreshJobCreated> {
  */
 export function fetchCollectionJob(jobId: number): Promise<CollectionJob> {
   return api.get<CollectionJob>(`/api/v1/collection/jobs/${jobId}`);
+}
+
+/**
+ * 자산 추이 시계열 스냅샷 조회 — 도입 이후 사용자가 방문한 날들의 점.
+ * Phase 1 은 KRW 단위만.
+ */
+export function fetchPortfolioSnapshots(
+  range: SnapshotRange = '1m'
+): Promise<PortfolioSnapshot[]> {
+  return api.get<PortfolioSnapshot[]>(`/api/v1/portfolio/snapshots?range=${range}`);
 }

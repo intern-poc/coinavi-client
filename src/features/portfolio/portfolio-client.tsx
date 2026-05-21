@@ -8,6 +8,7 @@ import {
   fetchPortfolio,
   refreshPortfolio,
 } from './api';
+import { PortfolioChartView } from './portfolio-chart-view';
 import { PortfolioCoinList } from './portfolio-coin-list';
 import { PortfolioEmpty } from './portfolio-empty';
 import { PortfolioExchangeTabs } from './portfolio-exchange-tabs';
@@ -221,7 +222,12 @@ export function PortfolioClient() {
             selected={exchangeFilter}
             onSelect={setExchangeFilter}
           />
-          <PortfolioPieChart coins={sortedCoins} currency={currency} />
+          {/* 전체 탭은 도넛↔추이 토글 카드, 거래소 탭은 도넛만 */}
+          {exchangeFilter === 'ALL' ? (
+            <PortfolioChartView coins={sortedCoins} currency={currency} />
+          ) : (
+            <PortfolioPieChart coins={sortedCoins} currency={currency} />
+          )}
           <PortfolioCoinList coins={sortedCoins} currency={currency} />
         </>
       )}

@@ -73,3 +73,19 @@ export type CollectionJob = {
   startedAt: string | null;
   finishedAt: string | null;
 };
+
+/**
+ * 자산 추이 차트 범위 — 서버 SnapshotRange 와 1:1.
+ */
+export type SnapshotRange = '1w' | '1m' | '3m' | '6m' | '1y';
+
+/**
+ * GET /api/v1/portfolio/snapshots 응답 element — 일일 스냅샷 한 점.
+ * 모든 금액 KRW 단위 (Phase 1).
+ */
+export type PortfolioSnapshot = {
+  date: string;           // ISO 'YYYY-MM-DD'
+  totalValue: number;
+  totalPnl: number;
+  totalPnlPercent: number | null;
+};

@@ -54,18 +54,26 @@ export function formatLargePrice(
 ): string {
   if (value == null) return '-';
   if (currency === 'KRW') {
-    if (value >= 1e12) return `${(value / 1e12).toFixed(2)}조원`;
-    if (value >= 1e8) return `${(value / 1e8).toFixed(2)}억원`;
-    if (value >= 1e4) return `${(value / 1e4).toFixed(2)}만원`;
+    if (value >= 1e12) return `${trimZero((value / 1e12).toFixed(2))}조원`;
+    if (value >= 1e8) return `${trimZero((value / 1e8).toFixed(2))}억원`;
+    if (value >= 1e4) return `${trimZero((value / 1e4).toFixed(2))}만원`;
     // 만원 미만 — 시총·거래량에선 거의 안 나오지만 formatPrice 와 일관성 유지
     return `${value.toLocaleString('ko-KR', { maximumFractionDigits: krwDigits(value) })}원`;
   }
   // USD T/B/M/K — 시총 표기 글로벌 컨벤션
-  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
-  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
-  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
-  if (value >= 1e3) return `$${(value / 1e3).toFixed(2)}K`;
+  if (value >= 1e12) return `$${trimZero((value / 1e12).toFixed(2))}T`;
+  if (value >= 1e9) return `$${trimZero((value / 1e9).toFixed(2))}B`;
+  if (value >= 1e6) return `$${trimZero((value / 1e6).toFixed(2))}M`;
+  if (value >= 1e3) return `$${trimZero((value / 1e3).toFixed(2))}K`;
   return `$${value.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+}
+
+/**
+ * "12.00" → "12", "12.30" → "12.3", "12.34" → "12.34". 의미 없는 trailing 0 제거.
+ */
+function trimZero(s: string): string {
+  if (!s.includes('.')) return s;
+  return s.replace(/\.?0+$/, '');
 }
 
 /**
