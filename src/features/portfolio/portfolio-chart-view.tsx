@@ -51,10 +51,10 @@ function ChartToggle({
   return (
     <div className="inline-flex rounded-md border border-zinc-200 dark:border-zinc-800 overflow-hidden">
       <ToggleButton active={selected === 'donut'} onClick={() => onSelect('donut')}>
-        도넛
+        비중
       </ToggleButton>
       <ToggleButton active={selected === 'trend'} onClick={() => onSelect('trend')}>
-        추이
+        자산추이
       </ToggleButton>
     </div>
   );
