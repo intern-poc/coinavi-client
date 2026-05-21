@@ -152,8 +152,8 @@ function DemoGuide() {
       <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 text-xs text-emerald-800 dark:text-emerald-300">
         <p className="font-semibold mb-1">✨ 시연용 가상 거래소</p>
         <p>
-          실제 API 키 없이 5개 코인 보유 + 12개월 거래 내역이 자동으로 채워집니다. 본부장/투자자 시연,
-          기능 검토용. <b className="text-emerald-900 dark:text-emerald-200">아무 텍스트나 입력하면 통과</b>.
+          실제 API 키 없이 5개 코인 보유 + 12개월 거래 내역이 자동으로 채워집니다.
+          <b className="text-emerald-900 dark:text-emerald-200"> 아무 텍스트나 입력하면 통과</b>.
         </p>
       </div>
       <ol className="space-y-2 list-decimal list-inside">
