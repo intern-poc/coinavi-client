@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -65,7 +65,7 @@ export function PortfolioTrendChart() {
         <EmptyState />
       ) : (
         <>
-          <Chart data={snapshots} />
+          <Chart data={snapshots} range={range} />
           {snapshots.length === 1 ? (
             <p className="text-xs text-zinc-500 mt-2 text-center">
               📍 오늘의 기록 1점. 매일 방문하면 추이 선이 그려집니다.
@@ -82,9 +82,38 @@ export function PortfolioTrendChart() {
   );
 }
 
-function Chart({ data }: { data: PortfolioSnapshot[] }) {
+function Chart({ data, range }: { data: PortfolioSnapshot[]; range: SnapshotRange }) {
   // 점 1개일 땐 dot 강조 (line 안 그려지므로) — 사용자가 "차트 안 보임" 느끼지 않게.
   const showDot = data.length === 1;
+
+  // 1년 범위는 점이 365개라 일자(MM-DD) 라벨이 X축에 빽빽하게 잘림. 월별 1개씩만 라벨 노출.
+  // 각 월에서 *실제 데이터에 존재하는 첫 날* 을 tick 으로 픽 — 카테고리 축이라 정확히 일치해야 함.
+  const monthlyTicks = useMemo<string[] | undefined>(() => {
+    if (range !== '1y' || data.length === 0) return undefined;
+    const seen = new Set<string>();
+    const ticks: string[] = [];
+    for (const s of data) {
+      const monthKey = s.date.slice(0, 7); // YYYY-MM
+      if (!seen.has(monthKey)) {
+        seen.add(monthKey);
+        ticks.push(s.date);
+      }
+    }
+    return ticks;
+  }, [range, data]);
+
+  const formatXTick = (d: string): string => {
+    if (range !== '1y') return d.slice(5); // 'MM-DD'
+    const year = d.slice(0, 4);
+    const month = parseInt(d.slice(5, 7), 10);
+    // 1월(연도 경계) 또는 데이터 시작점만 연도 같이 표시 — 나머지는 "5월" 식으로 간결.
+    const isFirst = monthlyTicks && monthlyTicks[0] === d;
+    if (month === 1 || isFirst) {
+      return `'${year.slice(2)} ${month}월`;
+    }
+    return `${month}월`;
+  };
+
   return (
     <div className="h-56">
       <ResponsiveContainer width="100%" height="100%">
@@ -98,7 +127,8 @@ function Chart({ data }: { data: PortfolioSnapshot[] }) {
           <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
           <XAxis
             dataKey="date"
-            tickFormatter={(d) => d.slice(5)}  // 'MM-DD'
+            ticks={monthlyTicks}
+            tickFormatter={formatXTick}
             tick={{ fontSize: 11 }}
             stroke="currentColor"
             strokeOpacity={0.4}
