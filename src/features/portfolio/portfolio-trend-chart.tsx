@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -15,12 +15,16 @@ import { formatLargePrice } from '@/lib/format';
 import type { PortfolioSnapshot, SnapshotRange } from '@/types/portfolio';
 
 /**
- * 자산 추이 차트 — 도입 이후 사용자가 방문한 날들의 KRW 평가액 시계열.
+ * 자산 추이 차트 — 사용자의 KRW 평가액 시계열.
  *
- * <p><b>Phase 1 한계</b>: 도입 이후 누적만 — 등록 직후엔 점 1개. 사용자가 매일 방문해야 채워짐.
- * 과거 데이터는 Phase 2 (trades 역산 백필) 에서.
+ * <p><b>데이터 구성</b>:
+ * <ul>
+ *   <li>오늘·미래 진입일 — 그날 실제 평가액 (정확)</li>
+ *   <li>과거 365일 (첫 진입 시 자동 백필) — 거래내역 역산 + CoinGecko 일별 가격 (추정값)</li>
+ * </ul>
+ * 외부 입출금/거래소 API 한도 이전 거래 누락 시 과거값이 부정확할 수 있어 작은 안내 노출.
  *
- * <p>금액 단위 KRW 고정. 차트 우상단 통화 토글은 Phase 2+.
+ * <p>금액 단위 KRW 고정. 통화 토글은 Phase 3+.
  */
 const RANGES: { code: SnapshotRange; label: string }[] = [
   { code: '1w', label: '1주' },
@@ -61,10 +65,15 @@ export function PortfolioTrendChart() {
         <EmptyState />
       ) : (
         <>
-          <Chart data={snapshots} />
-          {snapshots.length === 1 && (
+          <Chart data={snapshots} range={range} />
+          {snapshots.length === 1 ? (
             <p className="text-xs text-zinc-500 mt-2 text-center">
               📍 오늘의 기록 1점. 매일 방문하면 추이 선이 그려집니다.
+            </p>
+          ) : (
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-2 text-center leading-relaxed">
+              과거 데이터는 최근 1년 거래내역과 일별 시세로 추정한 값이에요.
+              외부 지갑 입출금은 반영되지 않아요.
             </p>
           )}
         </>
@@ -73,13 +82,38 @@ export function PortfolioTrendChart() {
   );
 }
 
-function Chart({ data }: { data: PortfolioSnapshot[] }) {
+function Chart({ data, range }: { data: PortfolioSnapshot[]; range: SnapshotRange }) {
+  // 1년 범위는 월별 점으로 집계 — 각 월의 *마지막 날* 값 (월말 평가액). 365점 → ~12점.
+  // 1주/1개월은 일별 그대로 (점 개수 적당, 사용자가 일별 변화 보고 싶어함).
+  const displayData = useMemo(() => {
+    if (range !== '1y') return data;
+    const byMonth = new Map<string, PortfolioSnapshot>();
+    for (const s of data) {
+      // 같은 월키에 대해 뒤(=더 늦은 날) 값이 덮어쓰기 → 결과적으로 월의 마지막 데이터.
+      byMonth.set(s.date.slice(0, 7), s);
+    }
+    return Array.from(byMonth.values());
+  }, [range, data]);
+
   // 점 1개일 땐 dot 강조 (line 안 그려지므로) — 사용자가 "차트 안 보임" 느끼지 않게.
-  const showDot = data.length === 1;
+  const showDot = displayData.length === 1;
+
+  const formatXTick = (d: string): string => {
+    if (range !== '1y') return d.slice(5); // 'MM-DD'
+    const year = d.slice(0, 4);
+    const month = parseInt(d.slice(5, 7), 10);
+    // 1월(연도 경계) + 데이터 시작점에만 연도 같이 — 나머지는 "5월" 식으로 간결.
+    const isFirst = displayData[0]?.date === d;
+    if (month === 1 || isFirst) {
+      return `'${year.slice(2)} ${month}월`;
+    }
+    return `${month}월`;
+  };
+
   return (
     <div className="h-56">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
@@ -89,7 +123,7 @@ function Chart({ data }: { data: PortfolioSnapshot[] }) {
           <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
           <XAxis
             dataKey="date"
-            tickFormatter={(d) => d.slice(5)}  // 'MM-DD'
+            tickFormatter={formatXTick}
             tick={{ fontSize: 11 }}
             stroke="currentColor"
             strokeOpacity={0.4}
@@ -158,23 +192,8 @@ function EmptyState() {
   return (
     <div className="h-56 flex flex-col items-center justify-center text-center text-sm text-zinc-500 gap-1">
       <p>아직 추이 데이터가 없어요.</p>
-      <p className="text-xs">포트폴리오를 방문할 때마다 매일 한 점씩 기록됩니다.</p>
+      <p className="text-xs">거래소 키를 등록하면 자동으로 추이가 채워집니다.</p>
     </div>
   );
 }
 
-function SinglePointHint({ snapshot }: { snapshot: PortfolioSnapshot }) {
-  return (
-    <div className="h-56 flex flex-col items-center justify-center text-center text-sm text-zinc-500 gap-2">
-      <p>
-        <span className="font-mono text-zinc-700 dark:text-zinc-200">
-          {formatLargePrice(snapshot.totalValue, 'KRW')}
-        </span>{' '}
-        — {snapshot.date}
-      </p>
-      <p className="text-xs">
-        추이 차트는 점이 2개 이상부터 표시됩니다. 내일 다시 방문하면 선 그래프로 보여요.
-      </p>
-    </div>
-  );
-}
