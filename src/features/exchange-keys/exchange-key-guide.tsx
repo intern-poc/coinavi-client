@@ -1,6 +1,6 @@
 'use client';
 
-import type { ExchangeCode } from '@/types/exchange-key';
+import { IS_DEV, type ExchangeCode } from '@/types/exchange-key';
 
 /**
  * 거래소별 API 키 발급 가이드 — 1차는 텍스트 단계 + 공식 링크. 추후 스크린샷 (README 차별점).
@@ -31,11 +31,17 @@ export function ExchangeKeyGuide({
         <TabButton active={selected === 'BINANCE'} onClick={() => onSelect('BINANCE')}>
           바이낸스
         </TabButton>
+        {IS_DEV && (
+          <TabButton active={selected === 'DEMO'} onClick={() => onSelect('DEMO')}>
+            Demo
+          </TabButton>
+        )}
       </div>
 
       {selected === 'UPBIT' && <UpbitGuide />}
       {selected === 'BITHUMB' && <BithumbGuide />}
       {selected === 'BINANCE' && <BinanceGuide />}
+      {selected === 'DEMO' && <DemoGuide />}
     </div>
   );
 }
@@ -137,6 +143,28 @@ function BithumbGuide() {
         </a>
       </li>
     </ol>
+  );
+}
+
+function DemoGuide() {
+  return (
+    <div className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+      <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 text-xs text-emerald-800 dark:text-emerald-300">
+        <p className="font-semibold mb-1">✨ 시연용 가상 거래소</p>
+        <p>
+          실제 API 키 없이 5개 코인 보유 + 12개월 거래 내역이 자동으로 채워집니다. 본부장/투자자 시연,
+          기능 검토용. <b className="text-emerald-900 dark:text-emerald-200">아무 텍스트나 입력하면 통과</b>.
+        </p>
+      </div>
+      <ol className="space-y-2 list-decimal list-inside">
+        <li>아래 폼에 <b>아무 값</b>이나 입력 (예: <code className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1 rounded">demo</code> / <code className="text-xs bg-zinc-100 dark:bg-zinc-800 px-1 rounded">demo</code>)</li>
+        <li>등록 → 자동으로 BTC·ETH·SOL·XRP·DOGE 잔고 + 과거 거래 적재</li>
+        <li>포트폴리오 진입 → 비중·자산추이 차트·평단·손익 모두 확인 가능</li>
+        <li className="text-xs text-zinc-500 pt-1">
+          ⚠ dev 빌드에서만 노출. prod 빌드에선 이 탭 자체가 숨겨집니다.
+        </li>
+      </ol>
+    </div>
   );
 }
 
