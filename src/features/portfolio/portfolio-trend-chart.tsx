@@ -15,12 +15,16 @@ import { formatLargePrice } from '@/lib/format';
 import type { PortfolioSnapshot, SnapshotRange } from '@/types/portfolio';
 
 /**
- * 자산 추이 차트 — 도입 이후 사용자가 방문한 날들의 KRW 평가액 시계열.
+ * 자산 추이 차트 — 사용자의 KRW 평가액 시계열.
  *
- * <p><b>Phase 1 한계</b>: 도입 이후 누적만 — 등록 직후엔 점 1개. 사용자가 매일 방문해야 채워짐.
- * 과거 데이터는 Phase 2 (trades 역산 백필) 에서.
+ * <p><b>데이터 구성</b>:
+ * <ul>
+ *   <li>오늘·미래 진입일 — 그날 실제 평가액 (정확)</li>
+ *   <li>과거 365일 (첫 진입 시 자동 백필) — 거래내역 역산 + CoinGecko 일별 가격 (추정값)</li>
+ * </ul>
+ * 외부 입출금/거래소 API 한도 이전 거래 누락 시 과거값이 부정확할 수 있어 작은 안내 노출.
  *
- * <p>금액 단위 KRW 고정. 차트 우상단 통화 토글은 Phase 2+.
+ * <p>금액 단위 KRW 고정. 통화 토글은 Phase 3+.
  */
 const RANGES: { code: SnapshotRange; label: string }[] = [
   { code: '1w', label: '1주' },
@@ -62,9 +66,14 @@ export function PortfolioTrendChart() {
       ) : (
         <>
           <Chart data={snapshots} />
-          {snapshots.length === 1 && (
+          {snapshots.length === 1 ? (
             <p className="text-xs text-zinc-500 mt-2 text-center">
               📍 오늘의 기록 1점. 매일 방문하면 추이 선이 그려집니다.
+            </p>
+          ) : (
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-2 text-center leading-relaxed">
+              과거 데이터는 거래내역과 일별 시세로 추정한 값이에요.
+              외부 입출금이 있거나 거래소 조회 한도(업비트 1년) 이전 거래는 반영되지 않을 수 있어요.
             </p>
           )}
         </>
@@ -158,23 +167,8 @@ function EmptyState() {
   return (
     <div className="h-56 flex flex-col items-center justify-center text-center text-sm text-zinc-500 gap-1">
       <p>아직 추이 데이터가 없어요.</p>
-      <p className="text-xs">포트폴리오를 방문할 때마다 매일 한 점씩 기록됩니다.</p>
+      <p className="text-xs">거래소 키를 등록하면 자동으로 추이가 채워집니다.</p>
     </div>
   );
 }
 
-function SinglePointHint({ snapshot }: { snapshot: PortfolioSnapshot }) {
-  return (
-    <div className="h-56 flex flex-col items-center justify-center text-center text-sm text-zinc-500 gap-2">
-      <p>
-        <span className="font-mono text-zinc-700 dark:text-zinc-200">
-          {formatLargePrice(snapshot.totalValue, 'KRW')}
-        </span>{' '}
-        — {snapshot.date}
-      </p>
-      <p className="text-xs">
-        추이 차트는 점이 2개 이상부터 표시됩니다. 내일 다시 방문하면 선 그래프로 보여요.
-      </p>
-    </div>
-  );
-}
