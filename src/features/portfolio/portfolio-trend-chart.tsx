@@ -72,8 +72,8 @@ export function PortfolioTrendChart() {
             </p>
           ) : (
             <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-2 text-center leading-relaxed">
-              과거 데이터는 거래내역과 일별 시세로 추정한 값이에요.
-              외부 입출금이 있거나 거래소 조회 한도(업비트 1년) 이전 거래는 반영되지 않을 수 있어요.
+              과거 데이터는 최근 1년 거래내역과 일별 시세로 추정한 값이에요.
+              외부 지갑 입출금은 반영되지 않아요.
             </p>
           )}
         </>
@@ -83,31 +83,27 @@ export function PortfolioTrendChart() {
 }
 
 function Chart({ data, range }: { data: PortfolioSnapshot[]; range: SnapshotRange }) {
-  // 점 1개일 땐 dot 강조 (line 안 그려지므로) — 사용자가 "차트 안 보임" 느끼지 않게.
-  const showDot = data.length === 1;
-
-  // 1년 범위는 점이 365개라 일자(MM-DD) 라벨이 X축에 빽빽하게 잘림. 월별 1개씩만 라벨 노출.
-  // 각 월에서 *실제 데이터에 존재하는 첫 날* 을 tick 으로 픽 — 카테고리 축이라 정확히 일치해야 함.
-  const monthlyTicks = useMemo<string[] | undefined>(() => {
-    if (range !== '1y' || data.length === 0) return undefined;
-    const seen = new Set<string>();
-    const ticks: string[] = [];
+  // 1년 범위는 월별 점으로 집계 — 각 월의 *마지막 날* 값 (월말 평가액). 365점 → ~12점.
+  // 1주/1개월은 일별 그대로 (점 개수 적당, 사용자가 일별 변화 보고 싶어함).
+  const displayData = useMemo(() => {
+    if (range !== '1y') return data;
+    const byMonth = new Map<string, PortfolioSnapshot>();
     for (const s of data) {
-      const monthKey = s.date.slice(0, 7); // YYYY-MM
-      if (!seen.has(monthKey)) {
-        seen.add(monthKey);
-        ticks.push(s.date);
-      }
+      // 같은 월키에 대해 뒤(=더 늦은 날) 값이 덮어쓰기 → 결과적으로 월의 마지막 데이터.
+      byMonth.set(s.date.slice(0, 7), s);
     }
-    return ticks;
+    return Array.from(byMonth.values());
   }, [range, data]);
+
+  // 점 1개일 땐 dot 강조 (line 안 그려지므로) — 사용자가 "차트 안 보임" 느끼지 않게.
+  const showDot = displayData.length === 1;
 
   const formatXTick = (d: string): string => {
     if (range !== '1y') return d.slice(5); // 'MM-DD'
     const year = d.slice(0, 4);
     const month = parseInt(d.slice(5, 7), 10);
-    // 1월(연도 경계) 또는 데이터 시작점만 연도 같이 표시 — 나머지는 "5월" 식으로 간결.
-    const isFirst = monthlyTicks && monthlyTicks[0] === d;
+    // 1월(연도 경계) + 데이터 시작점에만 연도 같이 — 나머지는 "5월" 식으로 간결.
+    const isFirst = displayData[0]?.date === d;
     if (month === 1 || isFirst) {
       return `'${year.slice(2)} ${month}월`;
     }
@@ -117,7 +113,7 @@ function Chart({ data, range }: { data: PortfolioSnapshot[]; range: SnapshotRang
   return (
     <div className="h-56">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={displayData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="trendGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.4} />
@@ -127,7 +123,6 @@ function Chart({ data, range }: { data: PortfolioSnapshot[]; range: SnapshotRang
           <CartesianGrid strokeDasharray="3 3" stroke="currentColor" strokeOpacity={0.1} />
           <XAxis
             dataKey="date"
-            ticks={monthlyTicks}
             tickFormatter={formatXTick}
             tick={{ fontSize: 11 }}
             stroke="currentColor"
