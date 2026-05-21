@@ -31,6 +31,8 @@ export function ExchangeKeysClient() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [registering, setRegistering] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  // 가이드 + 폼이 공유하는 거래소 선택 — 이중 선택 어색함 제거.
+  const [selectedExchange, setSelectedExchange] = useState<ExchangeCode>('UPBIT');
 
   async function refresh() {
     setLoadError(null);
@@ -117,9 +119,10 @@ export function ExchangeKeysClient() {
         <ExchangeKeyList keys={keys} onDelete={handleDelete} deletingId={deletingId} />
       )}
 
-      <ExchangeKeyGuide />
+      <ExchangeKeyGuide selected={selectedExchange} onSelect={setSelectedExchange} />
 
       <ExchangeKeyForm
+        exchange={selectedExchange}
         onRegister={handleRegister}
         registering={registering}
         alreadyRegistered={alreadyRegistered}

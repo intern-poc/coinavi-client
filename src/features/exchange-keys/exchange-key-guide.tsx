@@ -1,16 +1,20 @@
 'use client';
 
-import { useState } from 'react';
 import type { ExchangeCode } from '@/types/exchange-key';
 
 /**
  * 거래소별 API 키 발급 가이드 — 1차는 텍스트 단계 + 공식 링크. 추후 스크린샷 (README 차별점).
  *
- * <p>거래소 탭 토글 — 사용자가 등록하려는 거래소 가이드만 펼쳐 본다.
+ * <p>거래소 선택 state 는 상위({@link ExchangeKeysClient}) 에서 관리해 폼과 공유 — 가이드에서
+ * 선택한 거래소가 곧 폼이 등록할 거래소. 사용자가 이중 선택 안 하도록.
  */
-export function ExchangeKeyGuide() {
-  const [tab, setTab] = useState<ExchangeCode>('UPBIT');
-
+export function ExchangeKeyGuide({
+  selected,
+  onSelect,
+}: {
+  selected: ExchangeCode;
+  onSelect: (exchange: ExchangeCode) => void;
+}) {
   return (
     <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5">
       <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-3">
@@ -18,20 +22,20 @@ export function ExchangeKeyGuide() {
       </h2>
 
       <div className="inline-flex rounded-md border border-zinc-200 dark:border-zinc-800 overflow-hidden mb-4">
-        <TabButton active={tab === 'UPBIT'} onClick={() => setTab('UPBIT')}>
+        <TabButton active={selected === 'UPBIT'} onClick={() => onSelect('UPBIT')}>
           업비트
         </TabButton>
-        <TabButton active={tab === 'BITHUMB'} onClick={() => setTab('BITHUMB')}>
+        <TabButton active={selected === 'BITHUMB'} onClick={() => onSelect('BITHUMB')}>
           빗썸
         </TabButton>
-        <TabButton active={tab === 'BINANCE'} onClick={() => setTab('BINANCE')}>
+        <TabButton active={selected === 'BINANCE'} onClick={() => onSelect('BINANCE')}>
           바이낸스
         </TabButton>
       </div>
 
-      {tab === 'UPBIT' && <UpbitGuide />}
-      {tab === 'BITHUMB' && <BithumbGuide />}
-      {tab === 'BINANCE' && <BinanceGuide />}
+      {selected === 'UPBIT' && <UpbitGuide />}
+      {selected === 'BITHUMB' && <BithumbGuide />}
+      {selected === 'BINANCE' && <BinanceGuide />}
     </div>
   );
 }
