@@ -222,7 +222,7 @@ export function PortfolioClient() {
             selected={exchangeFilter}
             onSelect={setExchangeFilter}
           />
-          {/* 전체 탭은 도넛↔추이 토글 카드, 거래소 탭은 도넛만 */}
+          {/* 전체 탭은 비중↔추이↔매매성과 토글 카드, 거래소 탭은 도넛만 */}
           {exchangeFilter === 'ALL' ? (
             <PortfolioChartView coins={sortedCoins} currency={currency} />
           ) : (

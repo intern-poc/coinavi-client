@@ -89,3 +89,34 @@ export type PortfolioSnapshot = {
   totalPnl: number;
   totalPnlPercent: number | null;
 };
+
+/**
+ * GET /api/v1/trades/report 응답 — 청산된 거래 기반 실현 매매 성과. 금액 KRW.
+ * 거래 짝이 없으면 모든 값 0, bestTrade/worstTrade null.
+ */
+export type TradeReport = {
+  totalRealizedPnl: number;
+  totalRealizedPnlPercent: number;
+  tradeCount: number;
+  winCount: number;
+  lossCount: number;
+  winRate: number;            // %
+  avgHoldingDays: number;
+  byCoin: CoinRealizedPnl[];  // 실현손익 내림차순 — 코인별 막대그래프용
+  bestTrade: TradeHighlight | null;
+  worstTrade: TradeHighlight | null;
+};
+
+export type CoinRealizedPnl = {
+  coinSymbol: string;
+  realizedPnl: number;
+  realizedPnlPercent: number;
+  tradeCount: number;
+};
+
+export type TradeHighlight = {
+  coinSymbol: string;
+  realizedPnl: number;
+  realizedPnlPercent: number;
+  holdingDays: number;
+};

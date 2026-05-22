@@ -6,6 +6,7 @@ import type {
   PortfolioSnapshot,
   RefreshJobCreated,
   SnapshotRange,
+  TradeReport,
 } from '@/types/portfolio';
 
 /**
@@ -38,4 +39,11 @@ export function fetchPortfolioSnapshots(
   range: SnapshotRange = '1m'
 ): Promise<PortfolioSnapshot[]> {
   return api.get<PortfolioSnapshot[]>(`/api/v1/portfolio/snapshots?range=${range}`);
+}
+
+/**
+ * 매매 성과 리포트 조회 — 청산된 거래 기반 실현 손익·승률·보유기간·손익비. 인증 필요.
+ */
+export function fetchTradeReport(): Promise<TradeReport> {
+  return api.get<TradeReport>('/api/v1/trades/report');
 }
