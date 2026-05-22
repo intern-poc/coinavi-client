@@ -47,10 +47,24 @@ export function PortfolioTrendChart() {
       .catch((e) => setLoadError(e instanceof Error ? e.message : '추이 조회 실패'));
   }, [range]);
 
+  // 원금 = 최근(오늘) 스냅샷의 평가액 − 평가손익. 오늘 점은 실제 손익이라 정확
+  // (백필 과거점은 손익 0이라 제외 — 맨 끝 점만 사용). 현재 보유 기준 단일 값이라 range 무관.
+  const principal =
+    snapshots && snapshots.length > 0
+      ? snapshots[snapshots.length - 1].totalValue - snapshots[snapshots.length - 1].totalPnl
+      : null;
+
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-3">
-        <span className="text-xs text-zinc-500">통합 자산 추이 (KRW)</span>
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <span className="text-xs text-zinc-500">통합 자산 추이 (KRW)</span>
+          {principal != null && (
+            <p className="text-xs text-zinc-400 mt-0.5">
+              원금: <span className="tabular-nums">{formatLargePrice(principal, 'KRW')}</span>
+            </p>
+          )}
+        </div>
         <RangeTabs selected={range} onSelect={setRange} />
       </div>
 
