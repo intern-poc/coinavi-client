@@ -189,17 +189,16 @@ function BenchmarkSummary({ data }: { data: PortfolioSnapshot[] }) {
   const withBtc = data.filter((d) => d.btcHodlValue != null);
   if (data.length < 2 || withBtc.length < 2) return null;
 
-  const myReturn = pctChange(data[0].totalValue, data[data.length - 1].totalValue);
-  const btcReturn = pctChange(
-    withBtc[0].btcHodlValue as number,
-    withBtc[withBtc.length - 1].btcHodlValue as number
-  );
+  const myLast = data[data.length - 1].totalValue;
+  const btcLast = withBtc[withBtc.length - 1].btcHodlValue as number;
+  const myReturn = pctChange(data[0].totalValue, myLast);
+  const btcReturn = pctChange(withBtc[0].btcHodlValue as number, btcLast);
   if (myReturn == null || btcReturn == null) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-xs">
-      <Legend color={MY_COLOR} label="내 자산" value={myReturn} solid />
-      <Legend color={BTC_COLOR} label="BTC 보유 시" value={btcReturn} solid={false} />
+      <Legend color={MY_COLOR} label="내 자산" amount={myLast} value={myReturn} solid />
+      <Legend color={BTC_COLOR} label="BTC 보유 시" amount={btcLast} value={btcReturn} solid={false} />
     </div>
   );
 }
@@ -207,11 +206,13 @@ function BenchmarkSummary({ data }: { data: PortfolioSnapshot[] }) {
 function Legend({
   color,
   label,
+  amount,
   value,
   solid,
 }: {
   color: string;
   label: string;
+  amount: number;
   value: number;
   solid: boolean;
 }) {
@@ -224,7 +225,10 @@ function Legend({
         }}
       />
       <span className="text-zinc-500">{label}</span>
-      <span className={`tabular-nums font-medium ${changeColor(value)}`}>{formatPercent(value)}</span>
+      <span className="tabular-nums font-medium text-zinc-700 dark:text-zinc-200">
+        {formatLargePrice(amount, 'KRW')}
+      </span>
+      <span className={`tabular-nums ${changeColor(value)}`}>({formatPercent(value)})</span>
     </span>
   );
 }
