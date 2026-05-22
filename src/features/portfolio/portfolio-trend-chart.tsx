@@ -11,8 +11,11 @@ import {
   YAxis,
 } from 'recharts';
 import { fetchPortfolioSnapshots } from './api';
-import { formatLargePrice } from '@/lib/format';
+import { changeColor, formatLargePrice, formatPercent } from '@/lib/format';
 import type { PortfolioSnapshot, SnapshotRange } from '@/types/portfolio';
+
+const MY_COLOR = '#0ea5e9';   // sky — 내 자산
+const BTC_COLOR = '#f59e0b';  // amber — BTC 단순보유
 
 /**
  * 자산 추이 차트 — 사용자의 KRW 평가액 시계열.
@@ -44,10 +47,24 @@ export function PortfolioTrendChart() {
       .catch((e) => setLoadError(e instanceof Error ? e.message : '추이 조회 실패'));
   }, [range]);
 
+  // 원금 = 최근(오늘) 스냅샷의 평가액 − 평가손익. 오늘 점은 실제 손익이라 정확
+  // (백필 과거점은 손익 0이라 제외 — 맨 끝 점만 사용). 현재 보유 기준 단일 값이라 range 무관.
+  const principal =
+    snapshots && snapshots.length > 0
+      ? snapshots[snapshots.length - 1].totalValue - snapshots[snapshots.length - 1].totalPnl
+      : null;
+
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-3">
-        <span className="text-xs text-zinc-500">통합 자산 추이 (KRW)</span>
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <span className="text-xs text-zinc-500">통합 자산 추이 (KRW)</span>
+          {principal != null && (
+            <p className="text-xs text-zinc-400 mt-0.5">
+              원금: <span className="tabular-nums">{formatLargePrice(principal, 'KRW')}</span>
+            </p>
+          )}
+        </div>
         <RangeTabs selected={range} onSelect={setRange} />
       </div>
 
@@ -65,6 +82,7 @@ export function PortfolioTrendChart() {
         <EmptyState />
       ) : (
         <>
+          <BenchmarkSummary data={snapshots} />
           <Chart data={snapshots} range={range} />
           {snapshots.length === 1 ? (
             <p className="text-xs text-zinc-500 mt-2 text-center">
@@ -97,6 +115,8 @@ function Chart({ data, range }: { data: PortfolioSnapshot[]; range: SnapshotRang
 
   // 점 1개일 땐 dot 강조 (line 안 그려지므로) — 사용자가 "차트 안 보임" 느끼지 않게.
   const showDot = displayData.length === 1;
+  // BTC 벤치마크 값이 하나라도 있으면 점선 라인 노출.
+  const hasBtc = displayData.some((d) => d.btcHodlValue != null);
 
   const formatXTick = (d: string): string => {
     if (range !== '1y') return d.slice(5); // 'MM-DD'
@@ -136,7 +156,7 @@ function Chart({ data, range }: { data: PortfolioSnapshot[]; range: SnapshotRang
             width={70}
           />
           <Tooltip
-            formatter={(v) => [formatLargePrice(Number(v), 'KRW'), '평가액']}
+            formatter={(v, name) => [formatLargePrice(Number(v), 'KRW'), name]}
             labelFormatter={(d) => String(d)}
             contentStyle={{
               backgroundColor: 'rgba(24, 24, 27, 0.95)',
@@ -150,15 +170,86 @@ function Chart({ data, range }: { data: PortfolioSnapshot[]; range: SnapshotRang
           <Area
             type="monotone"
             dataKey="totalValue"
-            stroke="#0ea5e9"
+            name="내 자산"
+            stroke={MY_COLOR}
             strokeWidth={2}
             fill="url(#trendGradient)"
-            dot={showDot ? { r: 5, fill: '#0ea5e9' } : false}
+            dot={showDot ? { r: 5, fill: MY_COLOR } : false}
           />
+          {hasBtc && (
+            <Area
+              type="monotone"
+              dataKey="btcHodlValue"
+              name="BTC 보유 시"
+              stroke={BTC_COLOR}
+              strokeWidth={1.5}
+              strokeDasharray="4 3"
+              fill="none"
+              dot={false}
+              connectNulls
+            />
+          )}
         </AreaChart>
       </ResponsiveContainer>
     </div>
   );
+}
+
+/**
+ * vs BTC 단순보유 비교 요약 — 차트 위 범례 + 수익률. 첫↔마지막 스냅샷으로 계산.
+ * BTC 값 없으면 (시세 미수신) 렌더 안 함.
+ */
+function BenchmarkSummary({ data }: { data: PortfolioSnapshot[] }) {
+  const withBtc = data.filter((d) => d.btcHodlValue != null);
+  if (data.length < 2 || withBtc.length < 2) return null;
+
+  const myLast = data[data.length - 1].totalValue;
+  const btcLast = withBtc[withBtc.length - 1].btcHodlValue as number;
+  const myReturn = pctChange(data[0].totalValue, myLast);
+  const btcReturn = pctChange(withBtc[0].btcHodlValue as number, btcLast);
+  if (myReturn == null || btcReturn == null) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-2 text-xs">
+      <Legend color={MY_COLOR} label="내 자산" amount={myLast} value={myReturn} solid />
+      <Legend color={BTC_COLOR} label="BTC 보유 시" amount={btcLast} value={btcReturn} solid={false} />
+    </div>
+  );
+}
+
+function Legend({
+  color,
+  label,
+  amount,
+  value,
+  solid,
+}: {
+  color: string;
+  label: string;
+  amount: number;
+  value: number;
+  solid: boolean;
+}) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span
+        className="inline-block w-4 h-0"
+        style={{
+          borderTop: `2px ${solid ? 'solid' : 'dashed'} ${color}`,
+        }}
+      />
+      <span className="text-zinc-500">{label}</span>
+      <span className="tabular-nums font-medium text-zinc-700 dark:text-zinc-200">
+        {formatLargePrice(amount, 'KRW')}
+      </span>
+      <span className={`tabular-nums ${changeColor(value)}`}>({formatPercent(value)})</span>
+    </span>
+  );
+}
+
+function pctChange(from: number, to: number): number | null {
+  if (from === 0) return null;
+  return ((to - from) / from) * 100;
 }
 
 function RangeTabs({
