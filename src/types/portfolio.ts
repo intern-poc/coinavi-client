@@ -88,6 +88,7 @@ export type PortfolioSnapshot = {
   totalValue: number;
   totalPnl: number;
   totalPnlPercent: number | null;
+  btcHodlValue: number | null;   // 첫 시점 자산을 BTC 단순보유 했다면 이날 평가액. 시세 없으면 null
 };
 
 /**
