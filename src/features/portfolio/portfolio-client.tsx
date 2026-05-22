@@ -15,7 +15,6 @@ import { PortfolioExchangeTabs } from './portfolio-exchange-tabs';
 import { filterPortfolioByExchange, type ExchangeFilter } from './portfolio-filter';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PortfolioSummary } from './portfolio-summary';
-import { PortfolioTradeReport } from './portfolio-trade-report';
 import { useAuth } from '@/features/auth/use-auth';
 import type { DisplayCurrency } from '@/lib/format';
 import type { Portfolio } from '@/types/portfolio';
@@ -223,9 +222,7 @@ export function PortfolioClient() {
             selected={exchangeFilter}
             onSelect={setExchangeFilter}
           />
-          {/* 매매 성과 리포트 — 계정 전체 집계라 전체 탭에서만. 청산 거래 없으면 자동 숨김 */}
-          {exchangeFilter === 'ALL' && <PortfolioTradeReport />}
-          {/* 전체 탭은 도넛↔추이 토글 카드, 거래소 탭은 도넛만 */}
+          {/* 전체 탭은 비중↔추이↔매매성과 토글 카드, 거래소 탭은 도넛만 */}
           {exchangeFilter === 'ALL' ? (
             <PortfolioChartView coins={sortedCoins} currency={currency} />
           ) : (

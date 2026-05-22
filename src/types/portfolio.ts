@@ -102,9 +102,16 @@ export type TradeReport = {
   lossCount: number;
   winRate: number;            // %
   avgHoldingDays: number;
-  profitLossRatio: number | null;   // 이익·손실 둘 다 있어야 산출, 아니면 null
+  byCoin: CoinRealizedPnl[];  // 실현손익 내림차순 — 코인별 막대그래프용
   bestTrade: TradeHighlight | null;
   worstTrade: TradeHighlight | null;
+};
+
+export type CoinRealizedPnl = {
+  coinSymbol: string;
+  realizedPnl: number;
+  realizedPnlPercent: number;
+  tradeCount: number;
 };
 
 export type TradeHighlight = {

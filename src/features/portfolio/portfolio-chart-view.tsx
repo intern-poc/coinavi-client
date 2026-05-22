@@ -2,20 +2,21 @@
 
 import { useState } from 'react';
 import { PortfolioPieChart } from './portfolio-pie-chart';
+import { PortfolioTradeReport } from './portfolio-trade-report';
 import { PortfolioTrendChart } from './portfolio-trend-chart';
 import type { DisplayCurrency } from '@/lib/format';
 import type { PortfolioCoinHolding } from '@/types/portfolio';
 
 /**
- * 도넛(비중) ↔ 추이 토글 카드. "전체" 거래소 탭에서만 사용.
+ * 비중 ↔ 자산추이 ↔ 매매성과 토글 카드. "전체" 거래소 탭에서만 사용.
  *
  * <p>거래소별 추이는 snapshot 데이터가 거래소별 분해돼 있어야 하는데 (Phase 1 은 통합만 저장)
  * 빗썸/업비트 탭에서는 토글 자체를 노출 안 함 — portfolio-client 가 PieChart 만 직접 렌더.
  *
- * <p>두 컴포넌트(PieChart/TrendChart) 의 카드 wrapper 는 제거하고 이 view 가 단일 카드 책임 —
- * 토글 + 선택된 차트 한 영역.
+ * <p>하위 뷰들의 카드 wrapper 는 제거하고 이 view 가 단일 카드 책임 — 토글 + 선택된 뷰 한 영역.
+ * 매매성과는 계정 전체 집계라 coins/currency 무관 (자체 fetch).
  */
-type ChartView = 'donut' | 'trend';
+type ChartView = 'donut' | 'trend' | 'report';
 
 export function PortfolioChartView({
   coins,
@@ -32,11 +33,9 @@ export function PortfolioChartView({
         <ChartToggle selected={view} onSelect={setView} />
       </div>
 
-      {view === 'donut' ? (
-        <PortfolioPieChart coins={coins} currency={currency} />
-      ) : (
-        <PortfolioTrendChart />
-      )}
+      {view === 'donut' && <PortfolioPieChart coins={coins} currency={currency} />}
+      {view === 'trend' && <PortfolioTrendChart />}
+      {view === 'report' && <PortfolioTradeReport />}
     </div>
   );
 }
@@ -55,6 +54,9 @@ function ChartToggle({
       </ToggleButton>
       <ToggleButton active={selected === 'trend'} onClick={() => onSelect('trend')}>
         자산추이
+      </ToggleButton>
+      <ToggleButton active={selected === 'report'} onClick={() => onSelect('report')}>
+        매매성과
       </ToggleButton>
     </div>
   );
