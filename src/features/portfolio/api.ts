@@ -59,7 +59,10 @@ export function fetchInsightFacts(): Promise<InsightFacts> {
 
 /**
  * AI 인사이트 코멘트 조회 — facts를 Gemini가 자연어로 풀이. 인증 필요.
+ * @param refresh true면 7일 캐시 무시하고 재생성 ("다시 생성").
  */
-export function fetchInsightComment(): Promise<InsightComment> {
-  return api.get<InsightComment>('/api/v1/portfolio/insights/comment');
+export function fetchInsightComment(refresh = false): Promise<InsightComment> {
+  return api.get<InsightComment>(
+    `/api/v1/portfolio/insights/comment${refresh ? '?refresh=true' : ''}`
+  );
 }

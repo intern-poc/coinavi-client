@@ -13,7 +13,7 @@ import { PortfolioCoinList } from './portfolio-coin-list';
 import { PortfolioEmpty } from './portfolio-empty';
 import { PortfolioExchangeTabs } from './portfolio-exchange-tabs';
 import { filterPortfolioByExchange, type ExchangeFilter } from './portfolio-filter';
-import { PortfolioInsightFacts } from './portfolio-insight-facts';
+import { PortfolioAiInsight } from './portfolio-ai-insight';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PortfolioSummary } from './portfolio-summary';
 import { useAuth } from '@/features/auth/use-auth';
@@ -178,6 +178,7 @@ export function PortfolioClient() {
           currency={filtered.summary.currency}
         />
         <div className="flex items-center gap-2">
+          {!isEmpty && <PortfolioAiInsight />}
           <Link
             href="/exchange-keys"
             className="px-3 py-1.5 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -230,8 +231,6 @@ export function PortfolioClient() {
             <PortfolioPieChart coins={sortedCoins} currency={currency} />
           )}
           <PortfolioCoinList coins={sortedCoins} currency={currency} />
-          {/* 임시: AI 인사이트 facts 뷰어 (Phase 1 검증용). 전체 탭에서만. Phase 2에서 대체 */}
-          {exchangeFilter === 'ALL' && <PortfolioInsightFacts />}
         </>
       )}
     </div>
