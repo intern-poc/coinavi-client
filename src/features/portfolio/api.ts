@@ -2,6 +2,7 @@ import { api } from '@/lib/api';
 import type { DisplayCurrency } from '@/lib/format';
 import type {
   CollectionJob,
+  InsightFacts,
   Portfolio,
   PortfolioSnapshot,
   RefreshJobCreated,
@@ -46,4 +47,11 @@ export function fetchPortfolioSnapshots(
  */
 export function fetchTradeReport(): Promise<TradeReport> {
   return api.get<TradeReport>('/api/v1/trades/report');
+}
+
+/**
+ * AI 인사이트 facts 조회 — 룰 기반 정규화 분석 사실 (Phase 1, LLM 미연동). 인증 필요.
+ */
+export function fetchInsightFacts(): Promise<InsightFacts> {
+  return api.get<InsightFacts>('/api/v1/portfolio/insights/facts');
 }

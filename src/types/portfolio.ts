@@ -121,3 +121,33 @@ export type TradeHighlight = {
   realizedPnlPercent: number;
   holdingDays: number;
 };
+
+/**
+ * GET /api/v1/portfolio/insights/facts 응답 — AI 인사이트 입력용 정규화 facts.
+ * Phase 1: LLM 미연동. 룰로 뽑은 핵심 지표 + 임계값 flag. (디버그/검증용 노출)
+ */
+export type InsightFacts = {
+  hasData: boolean;
+  concentration: {
+    topCoin: string | null;
+    topWeight: number | null;   // %
+    coinCount: number;
+    flag: string;               // HIGH / OK
+  } | null;
+  sector: {
+    topCategory: string | null;
+    topWeight: number | null;   // %
+    coverage: number;           // % (카테고리 매핑 있는 보유분 비율)
+    flag: string;               // CONCENTRATED / OK / INSUFFICIENT_DATA
+  } | null;
+  behavior: {
+    tradeCount: number;
+    winCount: number;
+    lossCount: number;
+    winRate: number;            // %
+    avgHoldDays: number;
+    avgHoldDaysWin: number;
+    avgHoldDaysLoss: number;
+    flag: string;               // WEAK_CUT / OK
+  } | null;
+};

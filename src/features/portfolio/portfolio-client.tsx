@@ -13,6 +13,7 @@ import { PortfolioCoinList } from './portfolio-coin-list';
 import { PortfolioEmpty } from './portfolio-empty';
 import { PortfolioExchangeTabs } from './portfolio-exchange-tabs';
 import { filterPortfolioByExchange, type ExchangeFilter } from './portfolio-filter';
+import { PortfolioInsightFacts } from './portfolio-insight-facts';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PortfolioSummary } from './portfolio-summary';
 import { useAuth } from '@/features/auth/use-auth';
@@ -229,6 +230,8 @@ export function PortfolioClient() {
             <PortfolioPieChart coins={sortedCoins} currency={currency} />
           )}
           <PortfolioCoinList coins={sortedCoins} currency={currency} />
+          {/* 임시: AI 인사이트 facts 뷰어 (Phase 1 검증용). 전체 탭에서만. Phase 2에서 대체 */}
+          {exchangeFilter === 'ALL' && <PortfolioInsightFacts />}
         </>
       )}
     </div>
