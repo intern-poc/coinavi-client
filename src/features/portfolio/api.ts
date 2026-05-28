@@ -2,6 +2,7 @@ import { api } from '@/lib/api';
 import type { DisplayCurrency } from '@/lib/format';
 import type {
   CollectionJob,
+  InsightComment,
   InsightFacts,
   Portfolio,
   PortfolioSnapshot,
@@ -50,8 +51,15 @@ export function fetchTradeReport(): Promise<TradeReport> {
 }
 
 /**
- * AI 인사이트 facts 조회 — 룰 기반 정규화 분석 사실 (Phase 1, LLM 미연동). 인증 필요.
+ * AI 인사이트 facts 조회 — 룰 기반 정규화 분석 사실 (LLM 미연동). 인증 필요.
  */
 export function fetchInsightFacts(): Promise<InsightFacts> {
   return api.get<InsightFacts>('/api/v1/portfolio/insights/facts');
+}
+
+/**
+ * AI 인사이트 코멘트 조회 — facts를 Gemini가 자연어로 풀이. 인증 필요.
+ */
+export function fetchInsightComment(): Promise<InsightComment> {
+  return api.get<InsightComment>('/api/v1/portfolio/insights/comment');
 }

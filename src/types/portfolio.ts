@@ -151,3 +151,13 @@ export type InsightFacts = {
     flag: string;               // WEAK_CUT / OK
   } | null;
 };
+
+/**
+ * GET /api/v1/portfolio/insights/comment 응답 — facts를 LLM(Gemini)이 자연어로 풀이한 코멘트.
+ * available=false면 comment는 안내 메시지(키 미설정/생성 실패/데이터 없음).
+ */
+export type InsightComment = {
+  comment: string;
+  available: boolean;
+  generatedAt: string;
+};

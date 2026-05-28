@@ -1,31 +1,36 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fetchInsightFacts } from './api';
-import type { InsightFacts } from '@/types/portfolio';
+import { fetchInsightComment, fetchInsightFacts } from './api';
+import type { InsightComment, InsightFacts } from '@/types/portfolio';
 
 /**
- * AI 인사이트 facts 뷰어 — Phase 1 임시 디버그용.
+ * AI 인사이트 뷰어 — 임시 검증용.
  *
- * <p>룰 레이어가 뽑은 정규화 facts(종목 집중도·섹터·매매행동 + flag)를 화면에서 확인해
- * 룰/임계값을 튜닝하기 위한 화면. LLM 미연동. Phase 2(LLM 연동) 후 실제 AI 코멘트 UI로 대체 예정.
+ * <p>상단: Gemini가 facts를 풀이한 자연어 코멘트(hero). 하단: 룰이 뽑은 정규화 facts(근거).
+ * LLM 코멘트 품질 + 룰/임계값을 화면에서 확인하기 위한 화면. 실제 AI 코멘트 UI(버튼·드로어)는 후속.
  */
 export function PortfolioInsightFacts() {
   const [facts, setFacts] = useState<InsightFacts | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showRaw, setShowRaw] = useState(false);
+  const [comment, setComment] = useState<InsightComment | null>(null);
+  const [commentError, setCommentError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchInsightFacts()
       .then(setFacts)
       .catch((e) => setError(e instanceof Error ? e.message : 'facts 조회 실패'));
+    fetchInsightComment()
+      .then(setComment)
+      .catch((e) => setCommentError(e instanceof Error ? e.message : '코멘트 조회 실패'));
   }, []);
 
   return (
     <div className="rounded-lg border border-dashed border-amber-300 dark:border-amber-700 bg-amber-50/40 dark:bg-amber-950/20 p-5">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-semibold text-amber-700 dark:text-amber-400">
-          🔬 AI 인사이트 facts (임시 — Phase 1, LLM 미연동)
+          🔬 AI 인사이트 (임시 — 검증용)
         </span>
         {facts && (
           <button
@@ -35,6 +40,26 @@ export function PortfolioInsightFacts() {
           >
             {showRaw ? '카드 보기' : '원본 JSON'}
           </button>
+        )}
+      </div>
+
+      {/* AI 코멘트 (hero) */}
+      <div className="mb-4 rounded-md bg-white/70 dark:bg-zinc-900/50 border border-amber-200 dark:border-amber-800 p-3">
+        <p className="text-[11px] text-amber-600 dark:text-amber-400 mb-1">🤖 AI 코멘트</p>
+        {commentError && <p className="text-xs text-red-600 dark:text-red-400">{commentError}</p>}
+        {!commentError && comment === null && (
+          <p className="text-xs text-zinc-500">AI가 코멘트를 작성 중...</p>
+        )}
+        {comment && (
+          <p
+            className={`text-sm leading-relaxed ${
+              comment.available
+                ? 'text-zinc-800 dark:text-zinc-100'
+                : 'text-zinc-500 italic'
+            }`}
+          >
+            {comment.comment}
+          </p>
         )}
       </div>
 
