@@ -121,3 +121,53 @@ export type TradeHighlight = {
   realizedPnlPercent: number;
   holdingDays: number;
 };
+
+/**
+ * GET /api/v1/portfolio/insights/facts 응답 — AI 인사이트 입력용 정규화 facts.
+ * Phase 1: LLM 미연동. 룰로 뽑은 핵심 지표 + 임계값 flag. (디버그/검증용 노출)
+ */
+export type InsightFacts = {
+  hasData: boolean;
+  concentration: {
+    topCoin: string | null;
+    topWeight: number | null;   // %
+    coinCount: number;
+    flag: string;               // HIGH / OK
+  } | null;
+  sector: {
+    topCategory: string | null;
+    topWeight: number | null;   // %
+    coverage: number;           // % (카테고리 매핑 있는 보유분 비율)
+    flag: string;               // CONCENTRATED / OK / INSUFFICIENT_DATA
+  } | null;
+  behavior: {
+    tradeCount: number;
+    winCount: number;
+    lossCount: number;
+    winRate: number;            // %
+    avgHoldDays: number;
+    avgHoldDaysWin: number;
+    avgHoldDaysLoss: number;
+    avgWinPercent: number | null;   // 이익 거래 평균 수익률 %, 양수 (이익 거래 없으면 null)
+    avgLossPercent: number | null;  // 손실 거래 평균 수익률 %, 음수 (손실 거래 없으면 null)
+    profitLossRatio: number | null; // 손익비 = 평균이익/|평균손실| (손실 거래 없으면 null)
+    flag: string;               // WEAK_CUT / OK
+  } | null;
+  contribution: {
+    tradedCoinCount: number;
+    topGainCoin: string | null;     // 실현이익 1위 코인
+    topGainShare: number | null;    // 총 실현이익 중 비중 %
+    topLossCoin: string | null;     // 실현손실 1위 코인
+    flag: string;                   // CONCENTRATED_GAIN / OK
+  } | null;
+};
+
+/**
+ * GET /api/v1/portfolio/insights/comment 응답 — facts를 LLM(Gemini)이 자연어로 풀이한 코멘트.
+ * available=false면 comment는 안내 메시지(키 미설정/생성 실패/데이터 없음).
+ */
+export type InsightComment = {
+  comment: string;
+  available: boolean;
+  generatedAt: string;
+};

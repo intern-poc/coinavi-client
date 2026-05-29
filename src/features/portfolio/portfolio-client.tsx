@@ -13,6 +13,7 @@ import { PortfolioCoinList } from './portfolio-coin-list';
 import { PortfolioEmpty } from './portfolio-empty';
 import { PortfolioExchangeTabs } from './portfolio-exchange-tabs';
 import { filterPortfolioByExchange, type ExchangeFilter } from './portfolio-filter';
+import { PortfolioAiInsight } from './portfolio-ai-insight';
 import { PortfolioPieChart } from './portfolio-pie-chart';
 import { PortfolioSummary } from './portfolio-summary';
 import { useAuth } from '@/features/auth/use-auth';
@@ -177,6 +178,7 @@ export function PortfolioClient() {
           currency={filtered.summary.currency}
         />
         <div className="flex items-center gap-2">
+          {!isEmpty && <PortfolioAiInsight />}
           <Link
             href="/exchange-keys"
             className="px-3 py-1.5 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
