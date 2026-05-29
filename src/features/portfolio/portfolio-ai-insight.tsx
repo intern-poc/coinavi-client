@@ -113,13 +113,13 @@ export function PortfolioAiInsight() {
                     <p className="text-xs text-zinc-500 mb-2">분석 근거</p>
                     <div className="space-y-2 text-xs">
                       {facts.concentration && (
-                        <FactRow title="종목 집중도" flag={facts.concentration.flag}>
+                        <FactRow title="종목 집중도">
                           최대 비중 <b>{facts.concentration.topCoin ?? '-'}</b> {fmtPct(facts.concentration.topWeight)}
                           {' · '}보유 {facts.concentration.coinCount}종목
                         </FactRow>
                       )}
                       {facts.sector && (
-                        <FactRow title="섹터 집중도" flag={facts.sector.flag}>
+                        <FactRow title="섹터 집중도">
                           {facts.sector.topCategory ? (
                             <>
                               <b>{facts.sector.topCategory}</b> {fmtPct(facts.sector.topWeight)}
@@ -130,7 +130,7 @@ export function PortfolioAiInsight() {
                         </FactRow>
                       )}
                       {facts.behavior && (
-                        <FactRow title="매매 행동" flag={facts.behavior.flag}>
+                        <FactRow title="매매 행동">
                           승률 {fmtPct(facts.behavior.winRate)} ({facts.behavior.winCount}승 {facts.behavior.lossCount}패)
                           {facts.behavior.profitLossRatio != null && (
                             <>{' · '}손익비 {facts.behavior.profitLossRatio}</>
@@ -139,7 +139,7 @@ export function PortfolioAiInsight() {
                         </FactRow>
                       )}
                       {facts.contribution && (
-                        <FactRow title="수익 기여" flag={facts.contribution.flag}>
+                        <FactRow title="수익 기여">
                           {facts.contribution.topGainCoin ? (
                             <>
                               실현이익 <b>{facts.contribution.topGainCoin}</b> {fmtPct(facts.contribution.topGainShare)}
@@ -207,26 +207,13 @@ function RegenerateButton({
   );
 }
 
-function FactRow({ title, flag, children }: { title: string; flag: string; children: React.ReactNode }) {
+function FactRow({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start gap-2">
       <span className="w-20 shrink-0 text-zinc-500">{title}</span>
       <span className="flex-1 text-zinc-800 dark:text-zinc-200">{children}</span>
-      <FlagBadge flag={flag} />
     </div>
   );
-}
-
-function FlagBadge({ flag }: { flag: string }) {
-  const attention =
-    flag === 'HIGH' || flag === 'CONCENTRATED' || flag === 'WEAK_CUT' || flag === 'CONCENTRATED_GAIN';
-  const muted = flag === 'INSUFFICIENT_DATA';
-  const cls = attention
-    ? 'bg-amber-200 text-amber-900 dark:bg-amber-800 dark:text-amber-100'
-    : muted
-      ? 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
-      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300';
-  return <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${cls}`}>{flag}</span>;
 }
 
 function fmtPct(v: number | null): string {
