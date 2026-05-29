@@ -87,16 +87,23 @@ export function PortfolioAiInsight() {
               <p className="text-sm text-zinc-500 py-6 text-center">AI가 포트폴리오를 분석 중...</p>
             ) : (
               <>
-                {/* 코멘트 (hero) */}
+                {/* 코멘트 (hero) — LLM이 빈 줄로 나눈 단락을 각각 <p>로 렌더 */}
                 {comment && (
-                  <div className="rounded-md bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900 p-3 mb-4">
-                    <p
-                      className={`text-sm leading-relaxed ${
-                        comment.available ? 'text-zinc-800 dark:text-zinc-100' : 'text-zinc-500 italic'
-                      }`}
-                    >
-                      {comment.comment}
-                    </p>
+                  <div className="rounded-md bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900 p-3 mb-4 space-y-2">
+                    {comment.comment
+                      .split(/\n+/)
+                      .map((p) => p.trim())
+                      .filter(Boolean)
+                      .map((para, i) => (
+                        <p
+                          key={i}
+                          className={`text-sm leading-relaxed ${
+                            comment.available ? 'text-zinc-800 dark:text-zinc-100' : 'text-zinc-500 italic'
+                          }`}
+                        >
+                          {para}
+                        </p>
+                      ))}
                   </div>
                 )}
 
