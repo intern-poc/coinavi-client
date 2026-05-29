@@ -132,14 +132,7 @@ export function PortfolioAiInsight() {
                   </div>
                 )}
 
-                <button
-                  type="button"
-                  onClick={regenerate}
-                  disabled={regenerating}
-                  className="mt-4 w-full px-3 py-2 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-50 transition-colors"
-                >
-                  {regenerating ? '다시 생성 중...' : '🔄 다시 생성'}
-                </button>
+                <RegenerateButton comment={comment} regenerating={regenerating} onClick={regenerate} />
                 <p className="text-[11px] text-zinc-400 mt-2 text-center">
                   분석은 주 1회 갱신돼요. 거래내역과 일별 시세 기반 추정이에요.
                 </p>
@@ -149,6 +142,46 @@ export function PortfolioAiInsight() {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * 다시 생성 버튼 — 생성 후 7일간 비활성(연타·비용 폭탄 방지), 7일 지나면 재활성.
+ * 생성 실패(available=false)는 재시도 허용 (캐시 안 됐으니).
+ */
+function RegenerateButton({
+  comment,
+  regenerating,
+  onClick,
+}: {
+  comment: InsightComment | null;
+  regenerating: boolean;
+  onClick: () => void;
+}) {
+  const REFRESH_DAYS = 7;
+  const daysSince =
+    comment?.generatedAt != null
+      ? (Date.now() - new Date(comment.generatedAt).getTime()) / 86_400_000
+      : Infinity;
+  const failed = comment != null && !comment.available;
+  const refreshAvailable = comment == null || failed || daysSince >= REFRESH_DAYS;
+  const daysLeft = Math.max(1, Math.ceil(REFRESH_DAYS - daysSince));
+
+  let label: string;
+  if (regenerating) label = '다시 생성 중...';
+  else if (failed) label = '🔄 다시 시도';
+  else if (refreshAvailable) label = '🔄 다시 생성';
+  else label = `주 1회 갱신 · ${daysLeft}일 후 다시 생성 가능`;
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={regenerating || !refreshAvailable}
+      className="mt-4 w-full px-3 py-2 text-xs rounded-md border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 enabled:hover:bg-zinc-100 dark:enabled:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    >
+      {label}
+    </button>
   );
 }
 
