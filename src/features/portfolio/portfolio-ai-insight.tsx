@@ -87,23 +87,25 @@ export function PortfolioAiInsight() {
               <p className="text-sm text-zinc-500 py-6 text-center">AI가 포트폴리오를 분석 중...</p>
             ) : (
               <>
-                {/* 코멘트 (hero) — LLM이 빈 줄로 나눈 단락을 각각 <p>로 렌더 */}
+                {/* 코멘트 (hero) — LLM이 "제목 줄 + 본문" 섹션으로 출력. 빈 줄로 섹션 구분 */}
                 {comment && (
-                  <div className="rounded-md bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900 p-3 mb-4 space-y-2">
-                    {comment.comment
-                      .split(/\n+/)
-                      .map((p) => p.trim())
-                      .filter(Boolean)
-                      .map((para, i) => (
+                  <div className="rounded-md bg-sky-50/60 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900 p-3 mb-4 space-y-3">
+                    {splitSections(comment.comment).map((sec, i) => (
+                      <div key={i}>
+                        {sec.header && (
+                          <p className="text-xs font-semibold text-sky-700 dark:text-sky-300 mb-0.5">
+                            {sec.header}
+                          </p>
+                        )}
                         <p
-                          key={i}
                           className={`text-sm leading-relaxed ${
                             comment.available ? 'text-zinc-800 dark:text-zinc-100' : 'text-zinc-500 italic'
                           }`}
                         >
-                          {para}
+                          {sec.body}
                         </p>
-                      ))}
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -219,4 +221,25 @@ function FactRow({ title, children }: { title: string; children: React.ReactNode
 function fmtPct(v: number | null): string {
   if (v == null) return '-';
   return `${v}%`;
+}
+
+/**
+ * LLM 코멘트를 섹션으로 파싱 — 빈 줄로 섹션 구분, 각 섹션의 첫 줄이 제목.
+ * 한 줄짜리(데이터 빈약·생성 실패 안내 메시지)는 제목 없이 본문만.
+ */
+function splitSections(text: string): { header: string | null; body: string }[] {
+  return text
+    .split(/\n\s*\n/)
+    .map((block) =>
+      block
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+    )
+    .filter((lines) => lines.length > 0)
+    .map((lines) =>
+      lines.length >= 2
+        ? { header: lines[0], body: lines.slice(1).join(' ') }
+        : { header: null, body: lines[0] }
+    );
 }
