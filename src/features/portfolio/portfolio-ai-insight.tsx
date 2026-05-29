@@ -125,7 +125,22 @@ export function PortfolioAiInsight() {
                       {facts.behavior && (
                         <FactRow title="매매 행동" flag={facts.behavior.flag}>
                           승률 {fmtPct(facts.behavior.winRate)} ({facts.behavior.winCount}승 {facts.behavior.lossCount}패)
+                          {facts.behavior.profitLossRatio != null && (
+                            <>{' · '}손익비 {facts.behavior.profitLossRatio}</>
+                          )}
                           {' · '}평균 {facts.behavior.avgHoldDays}일
+                        </FactRow>
+                      )}
+                      {facts.contribution && (
+                        <FactRow title="수익 기여" flag={facts.contribution.flag}>
+                          {facts.contribution.topGainCoin ? (
+                            <>
+                              실현이익 <b>{facts.contribution.topGainCoin}</b> {fmtPct(facts.contribution.topGainShare)}
+                              {' · '}{facts.contribution.tradedCoinCount}종목 매매
+                            </>
+                          ) : (
+                            <span className="text-zinc-500">실현이익 없음 · {facts.contribution.tradedCoinCount}종목 매매</span>
+                          )}
                         </FactRow>
                       )}
                     </div>
@@ -196,7 +211,8 @@ function FactRow({ title, flag, children }: { title: string; flag: string; child
 }
 
 function FlagBadge({ flag }: { flag: string }) {
-  const attention = flag === 'HIGH' || flag === 'CONCENTRATED' || flag === 'WEAK_CUT';
+  const attention =
+    flag === 'HIGH' || flag === 'CONCENTRATED' || flag === 'WEAK_CUT' || flag === 'CONCENTRATED_GAIN';
   const muted = flag === 'INSUFFICIENT_DATA';
   const cls = attention
     ? 'bg-amber-200 text-amber-900 dark:bg-amber-800 dark:text-amber-100'

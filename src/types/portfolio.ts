@@ -148,7 +148,17 @@ export type InsightFacts = {
     avgHoldDays: number;
     avgHoldDaysWin: number;
     avgHoldDaysLoss: number;
+    avgWinPercent: number | null;   // 이익 거래 평균 수익률 %, 양수 (이익 거래 없으면 null)
+    avgLossPercent: number | null;  // 손실 거래 평균 수익률 %, 음수 (손실 거래 없으면 null)
+    profitLossRatio: number | null; // 손익비 = 평균이익/|평균손실| (손실 거래 없으면 null)
     flag: string;               // WEAK_CUT / OK
+  } | null;
+  contribution: {
+    tradedCoinCount: number;
+    topGainCoin: string | null;     // 실현이익 1위 코인
+    topGainShare: number | null;    // 총 실현이익 중 비중 %
+    topLossCoin: string | null;     // 실현손실 1위 코인
+    flag: string;                   // CONCENTRATED_GAIN / OK
   } | null;
 };
 
