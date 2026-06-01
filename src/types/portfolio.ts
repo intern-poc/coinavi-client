@@ -1,0 +1,173 @@
+import type { DisplayCurrency } from '@/lib/format';
+import type { ExchangeCode } from './exchange-key';
+
+/**
+ * 백엔드 PortfolioResponse 와 1:1.
+ *
+ * <p>1차 프론트는 \`summary.totalValuation\` + \`coins[].symbol/imageUrl/valuation/weight\` 만 사용.
+ * \`combinedAvgPrice\`, \`byExchange\`, \`exchanges\` 는 응답에 있지만 후속 (거래소별 펼치기·평단/손익)
+ * 에서 활용 예정.
+ */
+export type Portfolio = {
+  summary: PortfolioSummary;
+  coins: PortfolioCoinHolding[];
+  exchanges: PortfolioExchangeSummary[];
+};
+
+export type PortfolioSummary = {
+  totalCoins: number;
+  totalExchanges: number;
+  totalValuation: number;
+  totalCostBasis: number;
+  totalUnrealizedPnl: number;
+  totalUnrealizedPnlPercent: number | null;   // cost 0 시 null
+  currency: DisplayCurrency;
+};
+
+export type PortfolioCoinHolding = {
+  coinId: number;
+  symbol: string;
+  name: string;
+  imageUrl: string | null;
+  totalQuantity: number;
+  combinedAvgPrice: number;
+  currentPrice: number | null;
+  valuation: number | null;
+  weight: number | null;
+  costBasis: number | null;
+  unrealizedPnl: number | null;
+  unrealizedPnlPercent: number | null;
+  byExchange: PortfolioExchangeBreakdown[];
+};
+
+export type PortfolioExchangeBreakdown = {
+  exchange: ExchangeCode;
+  quantity: number;
+  avgPrice: number;
+  lastSyncedAt: string | null;
+};
+
+export type PortfolioExchangeSummary = {
+  code: ExchangeCode;
+  name: string;
+  coinCount: number;
+  lastSyncedAt: string | null;
+};
+
+/**
+ * POST /api/v1/portfolio/refresh 응답 — 202 + jobId.
+ */
+export type RefreshJobCreated = {
+  jobId: number;
+};
+
+/**
+ * GET /api/v1/collection/jobs/{id} 응답 — polling 으로 완료 감지.
+ */
+export type CollectionJob = {
+  id: number;
+  status: 'PENDING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED';
+  fetchedCount: number | null;
+  failureReason: string | null;
+  requestedAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+};
+
+/**
+ * 자산 추이 차트 범위 — 서버 SnapshotRange 와 1:1.
+ */
+export type SnapshotRange = '1w' | '1m' | '3m' | '6m' | '1y';
+
+/**
+ * GET /api/v1/portfolio/snapshots 응답 element — 일일 스냅샷 한 점.
+ * 모든 금액 KRW 단위 (Phase 1).
+ */
+export type PortfolioSnapshot = {
+  date: string;           // ISO 'YYYY-MM-DD'
+  totalValue: number;
+  totalPnl: number;
+  totalPnlPercent: number | null;
+  btcHodlValue: number | null;   // 첫 시점 자산을 BTC 단순보유 했다면 이날 평가액. 시세 없으면 null
+};
+
+/**
+ * GET /api/v1/trades/report 응답 — 청산된 거래 기반 실현 매매 성과. 금액 KRW.
+ * 거래 짝이 없으면 모든 값 0, bestTrade/worstTrade null.
+ */
+export type TradeReport = {
+  totalRealizedPnl: number;
+  totalRealizedPnlPercent: number;
+  tradeCount: number;
+  winCount: number;
+  lossCount: number;
+  winRate: number;            // %
+  avgHoldingDays: number;
+  byCoin: CoinRealizedPnl[];  // 실현손익 내림차순 — 코인별 막대그래프용
+  bestTrade: TradeHighlight | null;
+  worstTrade: TradeHighlight | null;
+};
+
+export type CoinRealizedPnl = {
+  coinSymbol: string;
+  realizedPnl: number;
+  realizedPnlPercent: number;
+  tradeCount: number;
+};
+
+export type TradeHighlight = {
+  coinSymbol: string;
+  realizedPnl: number;
+  realizedPnlPercent: number;
+  holdingDays: number;
+};
+
+/**
+ * GET /api/v1/portfolio/insights/facts 응답 — AI 인사이트 입력용 정규화 facts.
+ * Phase 1: LLM 미연동. 룰로 뽑은 핵심 지표 + 임계값 flag. (디버그/검증용 노출)
+ */
+export type InsightFacts = {
+  hasData: boolean;
+  concentration: {
+    topCoin: string | null;
+    topWeight: number | null;   // %
+    coinCount: number;
+    flag: string;               // HIGH / OK
+  } | null;
+  sector: {
+    topCategory: string | null;
+    topWeight: number | null;   // %
+    coverage: number;           // % (카테고리 매핑 있는 보유분 비율)
+    flag: string;               // CONCENTRATED / OK / INSUFFICIENT_DATA
+  } | null;
+  behavior: {
+    tradeCount: number;
+    winCount: number;
+    lossCount: number;
+    winRate: number;            // %
+    avgHoldDays: number;
+    avgHoldDaysWin: number;
+    avgHoldDaysLoss: number;
+    avgWinPercent: number | null;   // 이익 거래 평균 수익률 %, 양수 (이익 거래 없으면 null)
+    avgLossPercent: number | null;  // 손실 거래 평균 수익률 %, 음수 (손실 거래 없으면 null)
+    profitLossRatio: number | null; // 손익비 = 평균이익/|평균손실| (손실 거래 없으면 null)
+    flag: string;               // WEAK_CUT / OK
+  } | null;
+  contribution: {
+    tradedCoinCount: number;
+    topGainCoin: string | null;     // 실현이익 1위 코인
+    topGainShare: number | null;    // 총 실현이익 중 비중 %
+    topLossCoin: string | null;     // 실현손실 1위 코인
+    flag: string;                   // CONCENTRATED_GAIN / OK
+  } | null;
+};
+
+/**
+ * GET /api/v1/portfolio/insights/comment 응답 — facts를 LLM(Gemini)이 자연어로 풀이한 코멘트.
+ * available=false면 comment는 안내 메시지(키 미설정/생성 실패/데이터 없음).
+ */
+export type InsightComment = {
+  comment: string;
+  available: boolean;
+  generatedAt: string;
+};

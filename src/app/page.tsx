@@ -1,64 +1,59 @@
-import Image from "next/image";
+import { Suspense } from 'react';
+import { Header } from '@/components/header';
+import { CategoryChips } from '@/features/coins/category-chips';
+import { CategoryDashboard } from '@/features/coins/category-dashboard';
+import { selectChipCategories } from '@/features/coins/category-popular';
+import { CoinTable } from '@/features/coins/coin-table';
+import { fetchCategories, fetchCoins } from '@/features/coins/api';
+import type { DisplayCurrency } from '@/lib/format';
 
-export default function Home() {
+const PAGE_SIZE = 50;
+
+type Props = {
+  searchParams: Promise<{ page?: string; currency?: string; categoryId?: string }>;
+};
+
+/**
+ * 메인 페이지 — 코인 시총 순 리스트 + 페이지네이션 + 통화 토글 + 카테고리 필터.
+ *
+ * <p>Server Component 가 URL ?page=N&currency=KRW|USD&categoryId=<slug> 를 읽어 백엔드에서
+ * 해당 페이지·통화·카테고리로 fetch. categoryId 있으면 카테고리 매핑된 코인만 표시.
+ *
+ * <p>URL 변경 (페이지네이션 / 통화 토글 / 카테고리 칩) → Next.js 가 이 Server Component 다시
+ * 렌더 → 새 initialPage 로 CoinTable re-mount.
+ */
+export default async function Home({ searchParams }: Props) {
+  const params = await searchParams;
+  const page = Math.max(0, parseInt(params.page ?? '0', 10) || 0);
+  const currency: DisplayCurrency =
+    params.currency?.toUpperCase() === 'USD' ? 'USD' : 'KRW';
+  const categoryId = params.categoryId?.trim() || null;
+
+  const [initialPage, allCategories] = await Promise.all([
+    fetchCoins(page, PAGE_SIZE, currency, categoryId ?? undefined),
+    fetchCategories(),
+  ]);
+  const chipCategories = selectChipCategories(allCategories);
+  const selectedCategoryName = categoryId
+    ? allCategories.find((c) => c.id === categoryId)?.name
+    : undefined;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <Header />
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <Suspense fallback={<div className="text-sm text-zinc-500">불러오는 중…</div>}>
+          <CategoryChips categories={chipCategories} selectedId={categoryId} />
+          <CoinTable
+            initialPage={initialPage}
+            currency={currency}
+            categoryName={selectedCategoryName}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+            {categoryId && (
+              <CategoryDashboard categoryId={categoryId} currency={currency} />
+            )}
+          </CoinTable>
+        </Suspense>
       </main>
     </div>
   );

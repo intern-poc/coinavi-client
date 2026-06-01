@@ -1,0 +1,68 @@
+import { api } from '@/lib/api';
+import type { DisplayCurrency } from '@/lib/format';
+import type {
+  CollectionJob,
+  InsightComment,
+  InsightFacts,
+  Portfolio,
+  PortfolioSnapshot,
+  RefreshJobCreated,
+  SnapshotRange,
+  TradeReport,
+} from '@/types/portfolio';
+
+/**
+ * 포트폴리오 조회 — PriceResolver 시세 적용된 평가금액·비중 포함. 인증 필요.
+ */
+export function fetchPortfolio(currency: DisplayCurrency = 'KRW'): Promise<Portfolio> {
+  return api.get<Portfolio>(`/api/v1/portfolio?currency=${currency}`);
+}
+
+/**
+ * 거래소 자산 재수집 트리거. 즉시 202 + jobId 반환 — 실제 수집은 MQ 워커가 비동기 처리.
+ * 호출 후 jobId 로 {@link fetchCollectionJob} polling 해서 완료 감지.
+ */
+export function refreshPortfolio(): Promise<RefreshJobCreated> {
+  return api.post<RefreshJobCreated>('/api/v1/portfolio/refresh');
+}
+
+/**
+ * 수집 job 상태 조회. status === 'SUCCEEDED' 또는 'FAILED' 면 종결.
+ */
+export function fetchCollectionJob(jobId: number): Promise<CollectionJob> {
+  return api.get<CollectionJob>(`/api/v1/collection/jobs/${jobId}`);
+}
+
+/**
+ * 자산 추이 시계열 스냅샷 조회 — 도입 이후 사용자가 방문한 날들의 점.
+ * Phase 1 은 KRW 단위만.
+ */
+export function fetchPortfolioSnapshots(
+  range: SnapshotRange = '1m'
+): Promise<PortfolioSnapshot[]> {
+  return api.get<PortfolioSnapshot[]>(`/api/v1/portfolio/snapshots?range=${range}`);
+}
+
+/**
+ * 매매 성과 리포트 조회 — 청산된 거래 기반 실현 손익·승률·보유기간·손익비. 인증 필요.
+ */
+export function fetchTradeReport(): Promise<TradeReport> {
+  return api.get<TradeReport>('/api/v1/trades/report');
+}
+
+/**
+ * AI 인사이트 facts 조회 — 룰 기반 정규화 분석 사실 (LLM 미연동). 인증 필요.
+ */
+export function fetchInsightFacts(): Promise<InsightFacts> {
+  return api.get<InsightFacts>('/api/v1/portfolio/insights/facts');
+}
+
+/**
+ * AI 인사이트 코멘트 조회 — facts를 Gemini가 자연어로 풀이. 인증 필요.
+ * @param refresh true면 7일 캐시 무시하고 재생성 ("다시 생성").
+ */
+export function fetchInsightComment(refresh = false): Promise<InsightComment> {
+  return api.get<InsightComment>(
+    `/api/v1/portfolio/insights/comment${refresh ? '?refresh=true' : ''}`
+  );
+}
