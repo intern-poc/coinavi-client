@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Header } from '@/components/header';
 import { CategoryChips } from '@/features/coins/category-chips';
 import { CategoryDashboard } from '@/features/coins/category-dashboard';
@@ -41,16 +42,18 @@ export default async function Home({ searchParams }: Props) {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Header />
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <CategoryChips categories={chipCategories} selectedId={categoryId} />
-        <CoinTable
-          initialPage={initialPage}
-          currency={currency}
-          categoryName={selectedCategoryName}
-        >
-          {categoryId && (
-            <CategoryDashboard categoryId={categoryId} currency={currency} />
-          )}
-        </CoinTable>
+        <Suspense fallback={<div className="text-sm text-zinc-500">불러오는 중…</div>}>
+          <CategoryChips categories={chipCategories} selectedId={categoryId} />
+          <CoinTable
+            initialPage={initialPage}
+            currency={currency}
+            categoryName={selectedCategoryName}
+          >
+            {categoryId && (
+              <CategoryDashboard categoryId={categoryId} currency={currency} />
+            )}
+          </CoinTable>
+        </Suspense>
       </main>
     </div>
   );

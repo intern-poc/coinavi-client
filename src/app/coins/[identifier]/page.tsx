@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { BackButton } from "@/components/back-button";
 import { CurrencyToggle } from "@/components/currency-toggle";
@@ -49,14 +50,16 @@ export default async function CoinDetailPage({ params, searchParams }: Props) {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Header />
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
-        <div className="flex items-center justify-between">
-          <BackButton fallback={currency === "USD" ? "/?currency=USD" : "/"} />
-          <CurrencyToggle />
-        </div>
-        <CoinDetailHeader coin={coin} currency={currency} />
-        <CoinDetailStats coin={coin} currency={currency} />
-        <CoinDetailChart chart={chart} range={range} currency={currency} />
-        <CoinDetailDescription coin={coin} />
+        <Suspense fallback={<div className="text-sm text-zinc-500">불러오는 중…</div>}>
+          <div className="flex items-center justify-between">
+            <BackButton fallback={currency === "USD" ? "/?currency=USD" : "/"} />
+            <CurrencyToggle />
+          </div>
+          <CoinDetailHeader coin={coin} currency={currency} />
+          <CoinDetailStats coin={coin} currency={currency} />
+          <CoinDetailChart chart={chart} range={range} currency={currency} />
+          <CoinDetailDescription coin={coin} />
+        </Suspense>
       </main>
     </div>
   );
