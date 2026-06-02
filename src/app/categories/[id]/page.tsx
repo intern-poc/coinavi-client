@@ -7,7 +7,7 @@ import { CoinTable } from '@/features/coins/coin-table';
 import { fetchCategories, fetchCoins } from '@/features/coins/api';
 import type { DisplayCurrency } from '@/lib/format';
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 20;
 
 type Props = {
   params: Promise<{ id: string }>;
