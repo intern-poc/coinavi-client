@@ -66,8 +66,8 @@ export function ExchangeKeyForm({
       onSubmit={handleSubmit}
       className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4"
     >
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">새 키 등록</h2>
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-3">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">새 키 등록</h2>
         <span className="text-xs text-zinc-500">
           거래소 — <b className="text-zinc-700 dark:text-zinc-200">{EXCHANGE_LABELS[exchange]}</b>
           <span className="ml-1 text-zinc-400">(위 가이드 탭에서 변경)</span>
@@ -133,14 +133,14 @@ export function ExchangeKeyForm({
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-xs text-zinc-500">
           ⚠ <b>조회 권한만</b> 부여한 키를 등록하세요. 출금·거래 권한은 불필요합니다.
         </p>
         <button
           type="submit"
           disabled={registering || duplicate || !apiKey || !secret}
-          className="px-4 py-2 rounded-md bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+          className="px-4 py-2 rounded-md bg-zinc-900 dark:bg-zinc-50 text-zinc-50 dark:text-zinc-900 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity whitespace-nowrap flex-shrink-0 w-full sm:w-auto"
         >
           {registering ? '등록 중...' : '등록'}
         </button>

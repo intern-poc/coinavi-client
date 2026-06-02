@@ -38,7 +38,12 @@ export function CoinDetailStats({
         value={formatPercent(coin.priceChange7d)}
         valueClass={`font-mono ${changeColor(coin.priceChange7d)}`}
       />
-      <Stat label="마지막 동기화" value={lastSynced} valueClass="text-sm text-zinc-500" />
+      <Stat
+        label="마지막 동기화"
+        value={lastSynced}
+        valueClass="text-sm text-zinc-500"
+        className="col-span-2 sm:col-span-1"
+      />
     </div>
   );
 }
@@ -47,13 +52,17 @@ function Stat({
   label,
   value,
   valueClass,
+  className,
 }: {
   label: string;
   value: string;
   valueClass?: string;
+  className?: string;
 }) {
   return (
-    <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+    <div
+      className={`rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 ${className ?? ''}`}
+    >
       <div className="text-xs uppercase tracking-wide text-zinc-500 mb-1">{label}</div>
       <div className={valueClass ?? 'text-base font-medium text-zinc-900 dark:text-zinc-50'}>
         {value}
