@@ -71,31 +71,20 @@ function ServerIpNotice() {
   };
 
   return (
-    <div className="rounded-md border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 mb-5">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-amber-700 dark:text-amber-400 text-base">⚠</span>
-        <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-          서버 IP 화이트리스트 등록 필수
-        </p>
-      </div>
-
-      <div className="flex items-center gap-2 my-3">
-        <code className="flex-1 px-3 py-2 rounded bg-white dark:bg-zinc-900 border border-amber-300 dark:border-amber-800 text-base font-mono font-semibold text-zinc-900 dark:text-zinc-50 select-all">
-          {SERVER_NAT_IP}
-        </code>
-        <button
-          type="button"
-          onClick={copy}
-          className="px-3 py-2 text-xs font-medium rounded bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white whitespace-nowrap transition-colors"
-        >
-          {copied ? '✓ 복사됨' : '📋 복사'}
-        </button>
-      </div>
-
-      <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-        Coinavi 서버가 이 IP 에서 거래소 API 를 호출합니다. <b>본인 PC IP 가 아닌 이 IP 를 등록</b>해야
-        잔고·거래 내역 조회가 가능합니다.
-      </p>
+    <div className="rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 mb-4 flex items-center gap-2 flex-wrap">
+      <span className="text-xs font-medium text-amber-900 dark:text-amber-200 whitespace-nowrap">
+        ⚠ 등록할 IP
+      </span>
+      <code className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-amber-300 dark:border-amber-800 text-sm font-mono font-semibold text-zinc-900 dark:text-zinc-50 select-all">
+        {SERVER_NAT_IP}
+      </code>
+      <button
+        type="button"
+        onClick={copy}
+        className="px-2 py-0.5 text-xs font-medium rounded bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white whitespace-nowrap transition-colors"
+      >
+        {copied ? '✓ 복사됨' : '복사'}
+      </button>
     </div>
   );
 }

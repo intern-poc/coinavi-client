@@ -102,9 +102,6 @@ export function ExchangeKeysClient() {
         <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
           거래소 API 키 관리
         </h1>
-        <p className="text-sm text-zinc-500 mt-1">
-          등록한 키는 AES-256-GCM 으로 암호화되어 저장되며, 평문은 어디에도 노출되지 않습니다.
-        </p>
       </div>
 
       {loadError && (
