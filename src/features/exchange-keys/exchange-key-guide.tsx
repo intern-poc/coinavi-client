@@ -71,17 +71,17 @@ function ServerIpNotice() {
   };
 
   return (
-    <div className="rounded-md border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 mb-4 flex items-center gap-2 flex-wrap">
-      <span className="text-xs font-medium text-amber-900 dark:text-amber-200 whitespace-nowrap">
-        ⚠ 등록할 IP
+    <div className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 mb-4 flex items-center gap-2 flex-wrap">
+      <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
+        등록할 IP
       </span>
-      <code className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-amber-300 dark:border-amber-800 text-sm font-mono font-semibold text-zinc-900 dark:text-zinc-50 select-all">
+      <code className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-sm font-mono font-semibold text-zinc-900 dark:text-zinc-50 select-all">
         {SERVER_NAT_IP}
       </code>
       <button
         type="button"
         onClick={copy}
-        className="px-2 py-0.5 text-xs font-medium rounded bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white whitespace-nowrap transition-colors"
+        className="px-2 py-0.5 text-xs font-medium rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 whitespace-nowrap transition-colors"
       >
         {copied ? '✓ 복사됨' : '복사'}
       </button>
@@ -122,7 +122,7 @@ function UpbitGuide() {
         </span>
       </li>
       <li>
-        <b>특정 IP 등록</b> — <span className="text-amber-700 dark:text-amber-400 font-medium">
+        <b>특정 IP 등록</b> — <span className="font-semibold text-zinc-900 dark:text-zinc-100">
         위 박스의 서버 IP ({SERVER_NAT_IP})</span> 를 입력하세요.
         <span className="block text-xs text-zinc-500 mt-0.5">
           본인 PC IP 가 아닙니다. Coinavi 서버가 잔고를 조회하기 때문.
@@ -166,7 +166,7 @@ function BithumbGuide() {
         </span>
       </li>
       <li>
-        <b>허용 IP 등록</b> — <span className="text-amber-700 dark:text-amber-400 font-medium">
+        <b>허용 IP 등록</b> — <span className="font-semibold text-zinc-900 dark:text-zinc-100">
         위 박스의 서버 IP ({SERVER_NAT_IP})</span> 를 입력하세요.
         <span className="block text-xs text-zinc-500 mt-0.5">
           빗썸 정책 변경 (2026.06.01 시행) — 7.31 부터 미등록 IP 차단.
@@ -236,7 +236,7 @@ function BinanceGuide() {
       </li>
       <li>
         <b>IP 제한</b> — Restrict access to trusted IPs only 선택 후
-        <span className="text-amber-700 dark:text-amber-400 font-medium">
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">
         {' '}위 박스의 서버 IP ({SERVER_NAT_IP})</span> 입력.
         <span className="block text-xs text-zinc-500 mt-0.5">
           Unrestricted 로 두면 키 노출 시 자산 위험. 반드시 서버 IP 로 제한.
