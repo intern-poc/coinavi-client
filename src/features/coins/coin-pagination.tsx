@@ -46,8 +46,8 @@ export function CoinPagination({
         <PaginationButton onClick={() => go(0)} disabled={isFirst}>
           ‹‹
         </PaginationButton>
-        <PaginationButton onClick={() => go(currentPage - 1)} disabled={isFirst}>
-          이전
+        <PaginationButton onClick={() => go(currentPage - 1)} disabled={isFirst} ariaLabel="이전">
+          ‹
         </PaginationButton>
 
         {pageNumbers.map((n) => (
@@ -60,8 +60,8 @@ export function CoinPagination({
           </PaginationButton>
         ))}
 
-        <PaginationButton onClick={() => go(currentPage + 1)} disabled={isLast}>
-          다음
+        <PaginationButton onClick={() => go(currentPage + 1)} disabled={isLast} ariaLabel="다음">
+          ›
         </PaginationButton>
         <PaginationButton onClick={() => go(totalPages - 1)} disabled={isLast}>
           ››
@@ -80,11 +80,13 @@ function PaginationButton({
   onClick,
   disabled,
   active,
+  ariaLabel,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   active?: boolean;
+  ariaLabel?: string;
 }) {
   const base =
     'min-w-[2.25rem] h-9 px-3 rounded-md text-sm transition-colors';
@@ -99,6 +101,7 @@ function PaginationButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
+      aria-label={ariaLabel}
       className={`${base} ${variant} ${disabledStyle}`.trim()}
     >
       {children}
