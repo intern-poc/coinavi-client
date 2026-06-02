@@ -176,9 +176,7 @@ function BithumbGuide() {
           발급만으론 끝이 아님
         </span>{' '}
         — 「사용 중 API 리스트」에서 <b>활성화</b> 버튼을 눌러 SMS 인증 문자의 링크로 활성화까지 완료.
-      </li>
-      <li>
-        <span className="block text-xs text-zinc-500">
+        <span className="block text-xs text-zinc-500 mt-0.5">
           ⚠ 발급 후 7일 내 미활성화 또는 30일간 미사용 시 빗썸이 키를 자동 비활성화합니다.
         </span>
       </li>

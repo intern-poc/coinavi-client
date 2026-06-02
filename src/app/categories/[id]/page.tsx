@@ -46,21 +46,19 @@ export default async function CategoryDetailPage({ params, searchParams }: Props
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <Header />
       <main className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex items-center justify-between mb-4">
-          <BackButton fallback="/categories" />
-          <CurrencyToggle />
-        </div>
-
         <div className="mb-4">
-          <div className="text-xs text-zinc-500 mb-1">카테고리</div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-            {category.name}
-          </h1>
-          <p className="text-sm text-zinc-500 mt-1 font-mono">{category.id}</p>
+          <BackButton fallback="/categories" />
         </div>
 
         {initialPage.totalElements === 0 ? (
           <>
+            {/* CoinTable 헤더 모양을 재현 — 페이지 전체에서 일관된 타이틀+토글 위치 유지 */}
+            <div className="flex items-baseline justify-between mb-4">
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                {category.name} 시세
+              </h2>
+              <CurrencyToggle />
+            </div>
             <CategoryDashboard categoryId={categoryId} currency={currency} />
             <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 p-10 text-center text-sm text-zinc-500">
               <p className="mb-2">이 카테고리에 매핑된 코인이 아직 없어요.</p>
