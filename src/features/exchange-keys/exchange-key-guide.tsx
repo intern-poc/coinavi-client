@@ -1,6 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { IS_DEV, type ExchangeCode } from '@/types/exchange-key';
+
+// Coinavi 백엔드가 NAT Gateway 를 통해 거래소 API 를 호출하는 고정 IP.
+// terraform/aws_eip.nat 와 동기화. NAT 재생성하면 여기 값도 갱신.
+const SERVER_NAT_IP = '54.116.150.183';
 
 /**
  * 거래소별 API 키 발급 가이드 — 1차는 텍스트 단계 + 공식 링크. 추후 스크린샷 (README 차별점).
@@ -38,10 +43,48 @@ export function ExchangeKeyGuide({
         )}
       </div>
 
+      {selected !== 'DEMO' && <ServerIpNotice />}
+
       {selected === 'UPBIT' && <UpbitGuide />}
       {selected === 'BITHUMB' && <BithumbGuide />}
       {selected === 'BINANCE' && <BinanceGuide />}
       {selected === 'DEMO' && <DemoGuide />}
+    </div>
+  );
+}
+
+/**
+ * 서버 NAT IP 안내 + 클립보드 복사 카드.
+ * 사용자는 본인 PC IP 가 아닌 이 IP 를 거래소 화이트리스트에 등록해야 함.
+ */
+function ServerIpNotice() {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(SERVER_NAT_IP);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard 권한 없으면 그냥 무시 — 사용자가 수동 복사
+    }
+  };
+
+  return (
+    <div className="rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2 mb-4 flex items-center gap-2 flex-wrap">
+      <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300 whitespace-nowrap">
+        등록할 IP
+      </span>
+      <code className="px-2 py-0.5 rounded bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-sm font-mono font-semibold text-zinc-900 dark:text-zinc-50 select-all">
+        {SERVER_NAT_IP}
+      </code>
+      <button
+        type="button"
+        onClick={copy}
+        className="px-2 py-0.5 text-xs font-medium rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 whitespace-nowrap transition-colors"
+      >
+        {copied ? '✓ 복사됨' : '복사'}
+      </button>
     </div>
   );
 }
@@ -79,7 +122,8 @@ function UpbitGuide() {
         </span>
       </li>
       <li>
-        특정 IP 등록 — 본인 PC IP 또는 (배포 환경) 서버 IP. 모름이면 본인 PC IP 부터.
+        <b>특정 IP 등록</b> — <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+        위 박스의 서버 IP ({SERVER_NAT_IP})</span> 를 입력하세요.
       </li>
       <li>2FA 확인 후 발급 — <b>Access Key</b> 와 <b>Secret Key</b> 둘 다 표시되는 화면에서 복사</li>
       <li>위 폼에 붙여넣기 → 등록</li>
@@ -106,16 +150,24 @@ function BithumbGuide() {
         <span className="text-red-600 dark:text-red-400 font-medium">반드시 「API 1.0」 탭</span>{' '}
         선택.
         <span className="block text-xs text-zinc-500 mt-0.5">
-          코인아비는 빗썸 API 1.0 기준으로 연동돼 있어요. 2.0 키는 동작하지 않습니다.
+          Coinavi는 빗썸 API 1.0 기준으로 연동돼 있어요. 2.0 키는 동작하지 않습니다.
         </span>
       </li>
       <li>
-        <b>API 활성 항목</b> — <b>회원지갑정보</b> + <b>회원거래내역</b> 두 개 체크.{' '}
+        <b>API 활성 항목</b> - <b>회원지갑정보</b> + <b>회원거래내역</b> 두 개 체크.{' '}
         <span className="text-red-600 dark:text-red-400 font-medium">
           거래취소·주문내역·매수/매도주문·가상자산 출금은 체크하지 마세요.
         </span>
         <span className="block text-xs text-zinc-500 mt-0.5">
           회원지갑정보 = 보유 자산, 회원거래내역 = 거래 내역(평단·손익 분석용).
+        </span>
+      </li>
+      <li>
+        <b>허용 IP 등록</b> — <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+        위 박스의 서버 IP ({SERVER_NAT_IP})</span> 를 입력하세요.
+        <span className="block text-xs text-zinc-500 mt-0.5">
+          빗썸 정책 변경 (2026.06.01 시행) — 7.31 부터 미등록 IP 차단.
+          기존 키도 IP 등록 안 하면 자동 차단됩니다.
         </span>
       </li>
       <li>SMS 인증 후 발급 → <b>Connect Key</b> 와 <b>Secret Key</b> 둘 다 복사</li>
@@ -124,13 +176,11 @@ function BithumbGuide() {
           발급만으론 끝이 아님
         </span>{' '}
         — 「사용 중 API 리스트」에서 <b>활성화</b> 버튼을 눌러 SMS 인증 문자의 링크로 활성화까지 완료.
-      </li>
-      <li>
-        <span className="block text-xs text-zinc-500">
+        <span className="block text-xs text-zinc-500 mt-0.5">
           ⚠ 발급 후 7일 내 미활성화 또는 30일간 미사용 시 빗썸이 키를 자동 비활성화합니다.
         </span>
       </li>
-      <li>위 폼에 Connect Key·Secret Key 붙여넣기 → 등록</li>
+      <li>폼에 Connect Key·Secret Key 붙여넣기 → 등록</li>
       <li className="pt-1">
         공식 가이드:{' '}
         <a
@@ -179,9 +229,16 @@ function BinanceGuide() {
           Spot/Futures Trading, Withdrawals 는 모두 해제하세요.
         </span>
       </li>
-      <li>IP 제한 — Restrict to trusted IPs 권장 (본인 PC 또는 서버 IP)</li>
+      <li>
+        <b>IP 제한</b> — Restrict access to trusted IPs only 선택 후
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+        {' '}위 박스의 서버 IP ({SERVER_NAT_IP})</span> 입력.
+        <span className="block text-xs text-zinc-500 mt-0.5">
+          Unrestricted 로 두면 키 노출 시 자산 위험. 반드시 서버 IP 로 제한.
+        </span>
+      </li>
       <li>API Key 와 Secret Key 복사 (Secret 은 이때만 표시됨 — 잃어버리면 재발급)</li>
-      <li>위 폼에 붙여넣기 → 등록</li>
+      <li>폼에 붙여넣기 → 등록</li>
       <li className="pt-1">
         공식 가이드:{' '}
         <a
