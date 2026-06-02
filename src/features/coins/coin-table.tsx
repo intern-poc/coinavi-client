@@ -219,22 +219,22 @@ export function CoinTable({
          */}
         <table className="w-full table-fixed">
           <colgroup>
-            <col className="w-12" />
+            <col className="w-8 sm:w-12" />
             <col />
-            <col className="w-40" />
-            <col className="w-24" />
-            <col className="w-24" />
-            <col className="w-24" />
-            <col className="hidden md:table-column w-32" />
-            <col className="hidden lg:table-column w-36" />
+            <col className="w-28 sm:w-40" />
+            <col className="w-16 sm:w-24" />
+            <col className="hidden sm:table-column sm:w-24" />
+            <col className="hidden sm:table-column sm:w-24" />
+            <col className="hidden md:table-column md:w-32" />
+            <col className="hidden lg:table-column lg:w-36" />
           </colgroup>
           <thead>
             <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="py-3 px-4">#</th>
-              <th className="py-3 px-4">코인</th>
-              <th className="py-3 px-4 text-right">현재가</th>
-              <th className="py-3 px-4 text-right">24h</th>
-              <th className="py-3 px-4 text-right">
+              <th className="py-3 px-2 sm:px-4">#</th>
+              <th className="py-3 px-2 sm:px-4">코인</th>
+              <th className="py-3 px-2 sm:px-4 text-right">현재가</th>
+              <th className="py-3 px-2 sm:px-4 text-right">24h</th>
+              <th className="py-3 px-4 text-right hidden sm:table-cell">
                 <Tooltip
                   placement="bottom"
                   withIcon
@@ -251,7 +251,7 @@ export function CoinTable({
                   김프
                 </Tooltip>
               </th>
-              <th className="py-3 px-4 text-right">7d</th>
+              <th className="py-3 px-4 text-right hidden sm:table-cell">7d</th>
               <th className="py-3 px-4 text-right hidden md:table-cell">
                 시가총액
               </th>
@@ -276,13 +276,13 @@ export function CoinTable({
                   key={coin.id}
                   className="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                 >
-                  <td className="py-3 px-4 text-sm text-zinc-500">
+                  <td className="py-3 px-2 sm:px-4 text-sm text-zinc-500">
                     {coin.marketCapRank ?? "-"}
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-2 sm:px-4">
                     <Link
                       href={detailHref(coin, currency)}
-                      className="flex items-center gap-3 group"
+                      className="flex items-center gap-2 sm:gap-3 group min-w-0"
                     >
                       {coin.imageUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
@@ -291,33 +291,33 @@ export function CoinTable({
                           alt={coin.symbol}
                           width={28}
                           height={28}
-                          className="rounded-full"
+                          className="rounded-full w-6 h-6 sm:w-7 sm:h-7 flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-7 h-7 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-zinc-200 dark:bg-zinc-700 flex-shrink-0" />
                       )}
-                      <div>
-                        <div className="font-medium text-zinc-900 dark:text-zinc-50 group-hover:underline">
+                      <div className="min-w-0">
+                        <div className="font-medium text-zinc-900 dark:text-zinc-50 group-hover:underline truncate text-sm sm:text-base">
                           {coin.name ?? coin.symbol}
                         </div>
-                        <div className="text-xs text-zinc-500">
+                        <div className="text-xs text-zinc-500 truncate">
                           {coin.symbol}
                         </div>
                       </div>
                     </Link>
                   </td>
                   <td
-                    className={`py-3 px-4 text-right font-mono font-semibold ${priceColor} ${flashClass}`}
+                    className={`py-3 px-2 sm:px-4 text-right font-mono font-semibold text-sm sm:text-base ${priceColor} ${flashClass}`}
                   >
                     {formatPrice(coin.currentPrice, currency)}
                   </td>
                   <td
-                    className={`py-3 px-4 text-right font-mono ${changeColor(coin.priceChange24h)}`}
+                    className={`py-3 px-2 sm:px-4 text-right font-mono text-sm sm:text-base ${changeColor(coin.priceChange24h)}`}
                   >
                     {formatPercent(coin.priceChange24h)}
                   </td>
                   <td
-                    className={`py-3 px-4 text-right font-mono text-sm ${kimchiColor(kimchi)}`}
+                    className={`py-3 px-4 text-right font-mono text-sm hidden sm:table-cell ${kimchiColor(kimchi)}`}
                   >
                     {kimchi == null ? (
                       <Tooltip content="업비트 또는 바이낸스 한쪽에만 상장돼 있어 김프 계산이 불가합니다">
@@ -328,7 +328,7 @@ export function CoinTable({
                     )}
                   </td>
                   <td
-                    className={`py-3 px-4 text-right font-mono ${changeColor(coin.priceChange7d)}`}
+                    className={`py-3 px-4 text-right font-mono hidden sm:table-cell ${changeColor(coin.priceChange7d)}`}
                   >
                     {formatPercent(coin.priceChange7d)}
                   </td>
