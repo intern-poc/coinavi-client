@@ -219,7 +219,7 @@ export function CoinTable({
          */}
         <table className="w-full table-fixed">
           <colgroup>
-            <col className="w-8 sm:w-12" />
+            <col className="hidden sm:table-column sm:w-12" />
             <col />
             <col className="w-28 sm:w-40" />
             <col className="w-16 sm:w-24" />
@@ -230,7 +230,7 @@ export function CoinTable({
           </colgroup>
           <thead>
             <tr className="border-b border-zinc-200 dark:border-zinc-800 text-left text-xs uppercase tracking-wide text-zinc-500">
-              <th className="py-3 px-2 sm:px-4">#</th>
+              <th className="py-3 px-4 hidden sm:table-cell">#</th>
               <th className="py-3 px-2 sm:px-4">코인</th>
               <th className="py-3 px-2 sm:px-4 text-right">현재가</th>
               <th className="py-3 px-2 sm:px-4 text-right">24h</th>
@@ -276,7 +276,7 @@ export function CoinTable({
                   key={coin.id}
                   className="border-b border-zinc-100 dark:border-zinc-800/50 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors"
                 >
-                  <td className="py-3 px-2 sm:px-4 text-sm text-zinc-500">
+                  <td className="py-3 px-4 text-sm text-zinc-500 hidden sm:table-cell">
                     {coin.marketCapRank ?? "-"}
                   </td>
                   <td className="py-3 px-2 sm:px-4">

@@ -66,8 +66,8 @@ export function ExchangeKeyForm({
       onSubmit={handleSubmit}
       className="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4"
     >
-      <div className="flex items-baseline justify-between gap-3">
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">새 키 등록</h2>
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 sm:gap-3">
+        <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 whitespace-nowrap">새 키 등록</h2>
         <span className="text-xs text-zinc-500">
           거래소 — <b className="text-zinc-700 dark:text-zinc-200">{EXCHANGE_LABELS[exchange]}</b>
           <span className="ml-1 text-zinc-400">(위 가이드 탭에서 변경)</span>
