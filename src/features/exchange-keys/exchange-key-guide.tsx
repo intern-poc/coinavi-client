@@ -1,6 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { IS_DEV, type ExchangeCode } from '@/types/exchange-key';
+
+// Coinavi 백엔드가 NAT Gateway 를 통해 거래소 API 를 호출하는 고정 IP.
+// terraform/aws_eip.nat 와 동기화. NAT 재생성하면 여기 값도 갱신.
+const SERVER_NAT_IP = '54.116.150.183';
 
 /**
  * 거래소별 API 키 발급 가이드 — 1차는 텍스트 단계 + 공식 링크. 추후 스크린샷 (README 차별점).
@@ -38,10 +43,59 @@ export function ExchangeKeyGuide({
         )}
       </div>
 
+      {selected !== 'DEMO' && <ServerIpNotice />}
+
       {selected === 'UPBIT' && <UpbitGuide />}
       {selected === 'BITHUMB' && <BithumbGuide />}
       {selected === 'BINANCE' && <BinanceGuide />}
       {selected === 'DEMO' && <DemoGuide />}
+    </div>
+  );
+}
+
+/**
+ * 서버 NAT IP 안내 + 클립보드 복사 카드.
+ * 사용자는 본인 PC IP 가 아닌 이 IP 를 거래소 화이트리스트에 등록해야 함.
+ */
+function ServerIpNotice() {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(SERVER_NAT_IP);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard 권한 없으면 그냥 무시 — 사용자가 수동 복사
+    }
+  };
+
+  return (
+    <div className="rounded-md border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-4 mb-5">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-amber-700 dark:text-amber-400 text-base">⚠</span>
+        <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+          서버 IP 화이트리스트 등록 필수
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 my-3">
+        <code className="flex-1 px-3 py-2 rounded bg-white dark:bg-zinc-900 border border-amber-300 dark:border-amber-800 text-base font-mono font-semibold text-zinc-900 dark:text-zinc-50 select-all">
+          {SERVER_NAT_IP}
+        </code>
+        <button
+          type="button"
+          onClick={copy}
+          className="px-3 py-2 text-xs font-medium rounded bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white whitespace-nowrap transition-colors"
+        >
+          {copied ? '✓ 복사됨' : '📋 복사'}
+        </button>
+      </div>
+
+      <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+        Coinavi 서버가 이 IP 에서 거래소 API 를 호출합니다. <b>본인 PC IP 가 아닌 이 IP 를 등록</b>해야
+        잔고·거래 내역 조회가 가능합니다.
+      </p>
     </div>
   );
 }
@@ -79,7 +133,11 @@ function UpbitGuide() {
         </span>
       </li>
       <li>
-        특정 IP 등록 — 본인 PC IP 또는 (배포 환경) 서버 IP. 모름이면 본인 PC IP 부터.
+        <b>특정 IP 등록</b> — <span className="text-amber-700 dark:text-amber-400 font-medium">
+        위 박스의 서버 IP ({SERVER_NAT_IP})</span> 를 입력하세요.
+        <span className="block text-xs text-zinc-500 mt-0.5">
+          본인 PC IP 가 아닙니다. Coinavi 서버가 잔고를 조회하기 때문.
+        </span>
       </li>
       <li>2FA 확인 후 발급 — <b>Access Key</b> 와 <b>Secret Key</b> 둘 다 표시되는 화면에서 복사</li>
       <li>위 폼에 붙여넣기 → 등록</li>
@@ -116,6 +174,14 @@ function BithumbGuide() {
         </span>
         <span className="block text-xs text-zinc-500 mt-0.5">
           회원지갑정보 = 보유 자산, 회원거래내역 = 거래 내역(평단·손익 분석용).
+        </span>
+      </li>
+      <li>
+        <b>허용 IP 등록</b> — <span className="text-amber-700 dark:text-amber-400 font-medium">
+        위 박스의 서버 IP ({SERVER_NAT_IP})</span> 를 입력하세요.
+        <span className="block text-xs text-zinc-500 mt-0.5">
+          빗썸 정책 변경 (2026.06.01 시행) — 7.31 부터 미등록 IP 차단.
+          기존 키도 IP 등록 안 하면 자동 차단됩니다.
         </span>
       </li>
       <li>SMS 인증 후 발급 → <b>Connect Key</b> 와 <b>Secret Key</b> 둘 다 복사</li>
@@ -179,7 +245,14 @@ function BinanceGuide() {
           Spot/Futures Trading, Withdrawals 는 모두 해제하세요.
         </span>
       </li>
-      <li>IP 제한 — Restrict to trusted IPs 권장 (본인 PC 또는 서버 IP)</li>
+      <li>
+        <b>IP 제한</b> — Restrict access to trusted IPs only 선택 후
+        <span className="text-amber-700 dark:text-amber-400 font-medium">
+        {' '}위 박스의 서버 IP ({SERVER_NAT_IP})</span> 입력.
+        <span className="block text-xs text-zinc-500 mt-0.5">
+          Unrestricted 로 두면 키 노출 시 자산 위험. 반드시 서버 IP 로 제한.
+        </span>
+      </li>
       <li>API Key 와 Secret Key 복사 (Secret 은 이때만 표시됨 — 잃어버리면 재발급)</li>
       <li>위 폼에 붙여넣기 → 등록</li>
       <li className="pt-1">
