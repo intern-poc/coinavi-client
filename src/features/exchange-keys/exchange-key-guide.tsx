@@ -124,9 +124,6 @@ function UpbitGuide() {
       <li>
         <b>특정 IP 등록</b> — <span className="font-semibold text-zinc-900 dark:text-zinc-100">
         위 박스의 서버 IP ({SERVER_NAT_IP})</span> 를 입력하세요.
-        <span className="block text-xs text-zinc-500 mt-0.5">
-          본인 PC IP 가 아닙니다. Coinavi 서버가 잔고를 조회하기 때문.
-        </span>
       </li>
       <li>2FA 확인 후 발급 — <b>Access Key</b> 와 <b>Secret Key</b> 둘 다 표시되는 화면에서 복사</li>
       <li>위 폼에 붙여넣기 → 등록</li>
@@ -153,11 +150,11 @@ function BithumbGuide() {
         <span className="text-red-600 dark:text-red-400 font-medium">반드시 「API 1.0」 탭</span>{' '}
         선택.
         <span className="block text-xs text-zinc-500 mt-0.5">
-          코인아비는 빗썸 API 1.0 기준으로 연동돼 있어요. 2.0 키는 동작하지 않습니다.
+          Coinavi는 빗썸 API 1.0 기준으로 연동돼 있어요. 2.0 키는 동작하지 않습니다.
         </span>
       </li>
       <li>
-        <b>API 활성 항목</b> — <b>회원지갑정보</b> + <b>회원거래내역</b> 두 개 체크.{' '}
+        <b>API 활성 항목</b> - <b>회원지갑정보</b> + <b>회원거래내역</b> 두 개 체크.{' '}
         <span className="text-red-600 dark:text-red-400 font-medium">
           거래취소·주문내역·매수/매도주문·가상자산 출금은 체크하지 마세요.
         </span>
@@ -185,7 +182,7 @@ function BithumbGuide() {
           ⚠ 발급 후 7일 내 미활성화 또는 30일간 미사용 시 빗썸이 키를 자동 비활성화합니다.
         </span>
       </li>
-      <li>위 폼에 Connect Key·Secret Key 붙여넣기 → 등록</li>
+      <li>폼에 Connect Key·Secret Key 붙여넣기 → 등록</li>
       <li className="pt-1">
         공식 가이드:{' '}
         <a
@@ -243,7 +240,7 @@ function BinanceGuide() {
         </span>
       </li>
       <li>API Key 와 Secret Key 복사 (Secret 은 이때만 표시됨 — 잃어버리면 재발급)</li>
-      <li>위 폼에 붙여넣기 → 등록</li>
+      <li>폼에 붙여넣기 → 등록</li>
       <li className="pt-1">
         공식 가이드:{' '}
         <a
