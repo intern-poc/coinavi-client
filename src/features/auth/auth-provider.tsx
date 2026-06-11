@@ -3,7 +3,7 @@
 import { createContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { setAccessToken, clearAccessToken } from '@/lib/auth';
 import { silentRefresh } from '@/lib/api';
-import { loginWithGoogle as apiLoginWithGoogle, logout as apiLogout, fetchMe } from './api';
+import { loginWithGoogle as apiLoginWithGoogle, logout as apiLogout, withdraw as apiWithdraw, fetchMe } from './api';
 import type { UserMe } from '@/types/user';
 
 /**
@@ -27,6 +27,7 @@ type AuthContextValue = {
   user: UserMe | null;
   loginWithGoogleIdToken: (idToken: string) => Promise<void>;
   logout: () => Promise<void>;
+  withdraw: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
@@ -84,8 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('unauthenticated');
   }, []);
 
+  // 회원 탈퇴 — logout 과 달리 best-effort 가 아니다. 실패하면 throw 해서
+  // 호출부(모달)가 에러를 보여주고, 성공했을 때만 클라 상태를 비운다.
+  const withdraw = useCallback(async () => {
+    await apiWithdraw();
+    clearAccessToken();
+    setUser(null);
+    setStatus('unauthenticated');
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ status, user, loginWithGoogleIdToken, logout }}>
+    <AuthContext.Provider value={{ status, user, loginWithGoogleIdToken, logout, withdraw }}>
       {children}
     </AuthContext.Provider>
   );

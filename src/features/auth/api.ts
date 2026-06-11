@@ -28,3 +28,11 @@ export function logout(): Promise<void> {
 export function fetchMe(): Promise<UserMe> {
   return api.get<UserMe>('/api/v1/users/me');
 }
+
+/**
+ * 회원 탈퇴 — PII 익명화 + 거래소 키 삭제. 되돌릴 수 없는 액션.
+ * 거래 기록은 법적 보존 의무에 따라 비식별(user_id) 처리되어 보존됨.
+ */
+export function withdraw(): Promise<void> {
+  return api.delete<void>('/api/v1/users/me');
+}
