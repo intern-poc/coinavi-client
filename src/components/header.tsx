@@ -3,26 +3,30 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useAuth } from '@/features/auth/use-auth';
+import { WithdrawConfirmModal } from '@/features/auth/withdraw-confirm-modal';
 import { ThemeToggle } from './theme-toggle';
 
 /**
  * 전역 상단 헤더. 인증 상태에 따라 메뉴 변경.
  *
- * <p>'use client' — useAuth 훅 + 모바일 햄버거 메뉴 state 위해 Client Component.
+ * <p>'use client' — useAuth 훅 + 메뉴 state 위해 Client Component.
  *
  * <p>레이아웃 분기:
  * <ul>
- *   <li><b>sm 이상 (데스크탑)</b>: 기존 인라인 메뉴 — 이름·포트폴리오·로그아웃 한 줄</li>
- *   <li><b>sm 미만 (모바일)</b>: 햄버거 버튼만 노출, 클릭 시 헤더 아래 드롭다운 펼침</li>
+ *   <li><b>sm 이상 (데스크탑)</b>: 포트폴리오 링크 + 유저 이름 드롭다운(로그아웃·회원 탈퇴)</li>
+ *   <li><b>sm 미만 (모바일)</b>: 햄버거 버튼, 클릭 시 헤더 아래 드롭다운(탈퇴 포함) 펼침</li>
  * </ul>
  *
- * <p>ThemeToggle 은 작은 아이콘이라 두 모드 모두 항상 우측에 노출.
+ * <p>회원 탈퇴는 되돌릴 수 없어 {@link WithdrawConfirmModal} 확인 단계를 거친다.
  */
 export function Header() {
   const { status, user, logout } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // 모바일 햄버거
+  const [userMenuOpen, setUserMenuOpen] = useState(false); // 데스크탑 유저 드롭다운
+  const [withdrawOpen, setWithdrawOpen] = useState(false); // 탈퇴 확인 모달
 
   const closeMenu = () => setOpen(false);
+  const closeUserMenu = () => setUserMenuOpen(false);
 
   return (
     <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
@@ -43,23 +47,78 @@ export function Header() {
 
           {status === 'authenticated' && (
             <>
-              {user && (
-                <span className="px-3 py-2 text-zinc-700 dark:text-zinc-200">
-                  <span className="font-medium">{user.name}</span>님
-                </span>
-              )}
               <Link
                 href="/portfolio"
                 className="px-3 py-2 text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
               >
                 포트폴리오
               </Link>
-              <button
-                onClick={logout}
-                className="px-3 py-2 text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
-              >
-                로그아웃
-              </button>
+
+              {user && (
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setUserMenuOpen((v) => !v)}
+                    aria-expanded={userMenuOpen}
+                    aria-haspopup="menu"
+                    className="flex items-center gap-1 px-3 py-2 text-zinc-700 dark:text-zinc-200 hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+                  >
+                    <span>
+                      <span className="font-medium">{user.name}</span>님
+                    </span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.8}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={`w-4 h-4 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`}
+                    >
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+
+                  {userMenuOpen && (
+                    <>
+                      {/* 바깥 클릭 시 닫기용 투명 백드롭 */}
+                      <button
+                        type="button"
+                        aria-hidden
+                        tabIndex={-1}
+                        onClick={closeUserMenu}
+                        className="fixed inset-0 z-10 cursor-default"
+                      />
+                      <div
+                        role="menu"
+                        className="absolute right-0 mt-1 z-20 w-40 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg py-1"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            closeUserMenu();
+                            logout();
+                          }}
+                          className="w-full px-3 py-2 text-left text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        >
+                          로그아웃
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            closeUserMenu();
+                            setWithdrawOpen(true);
+                          }}
+                          className="w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                        >
+                          회원 탈퇴
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
             </>
           )}
 
@@ -140,6 +199,15 @@ export function Header() {
                 >
                   로그아웃
                 </button>
+                <button
+                  onClick={() => {
+                    closeMenu();
+                    setWithdrawOpen(true);
+                  }}
+                  className="px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md transition-colors"
+                >
+                  회원 탈퇴
+                </button>
               </>
             )}
 
@@ -155,6 +223,8 @@ export function Header() {
           </nav>
         </div>
       )}
+
+      <WithdrawConfirmModal open={withdrawOpen} onClose={() => setWithdrawOpen(false)} />
     </header>
   );
 }
